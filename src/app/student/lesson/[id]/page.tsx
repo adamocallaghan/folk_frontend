@@ -7,7 +7,7 @@ import { getCurriculumPackage, sendStudentChat, evaluateSession } from '@/lib/ap
 import { LessonPackage, ChatMessage, LessonSectionItem } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
-import { BookOpen, Send, CheckCircle2, Award, ArrowLeft, RefreshCw, HelpCircle } from 'lucide-react';
+import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw } from 'lucide-react';
 
 export default function StudentLessonPage() {
   const params = useParams();
@@ -34,13 +34,13 @@ export default function StudentLessonPage() {
           {
             id: 'init_1',
             role: 'assistant',
-            content: `Hello! I'm Aura, your tutor for "${title}". Read through the sections and diagrams at your own pace. If anything feels unclear, ask me anything!`,
+            content: `Hi! I'm Aura, your assistant for "${title}". As you read through the sections, feel free to ask me any questions if something is confusing.`,
             timestamp: new Date().toLocaleTimeString(),
           },
         ]);
       })
       .catch((err) => {
-        console.warn('Curriculum fetch error:', err);
+        console.warn('Lesson fetch error:', err);
         setLoading(false);
       });
   }, [packageId]);
@@ -102,9 +102,9 @@ export default function StudentLessonPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[500px] flex items-center justify-center text-xs text-slate-500 gap-2">
-        <RefreshCw className="h-4 w-4 animate-spin text-indigo-400" />
-        <span>Loading lesson module from Firestore...</span>
+      <div className="min-h-[500px] flex items-center justify-center text-xs text-[#71717a] gap-2">
+        <RefreshCw className="h-4 w-4 animate-spin text-white" />
+        <span>Loading lesson...</span>
       </div>
     );
   }
@@ -127,41 +127,40 @@ export default function StudentLessonPage() {
   const resolvedQuestions = lessonPackage?.assessment?.questions || [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-        <Link href="/student" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+    <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+      <div className="flex items-center justify-between pb-4 border-b border-[#27272a]">
+        <Link href="/student" className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-white transition-colors">
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Back to Lesson Catalog</span>
+          <span>Back to Lessons</span>
         </Link>
-        <span className="font-mono text-xs text-indigo-400 bg-slate-900 px-3 py-1 rounded border border-slate-800">
+        <span className="ui-tag">
           {packageId}
         </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 Cols: Lesson Reader */}
+        {/* Left Column: Lesson Reader */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="panel p-6 space-y-6">
-            <div className="space-y-2">
-              <span className="badge-tag text-indigo-400">
+          <div className="ui-panel p-6 space-y-6">
+            <div className="space-y-1.5">
+              <span className="ui-tag">
                 {lessonPackage?.framework?.target_age_group || lessonPackage?.target_age_group || 'Grade 7-8'}
               </span>
               <h1 className="text-2xl font-bold text-white tracking-tight">
-                {lessonPackage?.primary_text?.lesson_title || lessonPackage?.framework?.topic || 'Lesson Module'}
+                {lessonPackage?.primary_text?.lesson_title || lessonPackage?.framework?.topic || 'Lesson Overview'}
               </h1>
             </div>
 
             {lessonPackage?.primary_text?.introduction && (
-              <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800">
-                <p className="text-sm text-slate-200 leading-relaxed">{lessonPackage.primary_text.introduction}</p>
+              <div className="p-4 rounded bg-[#18181b] border border-[#27272a]">
+                <p className="text-sm text-[#fafafa] leading-relaxed">{lessonPackage.primary_text.introduction}</p>
               </div>
             )}
 
             {/* Diagrams */}
             {(resolvedDiagrams.length > 0 || resolvedChart) && (
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Visual Architectural Blueprint</h3>
+                <h3 className="text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Concept Diagram</h3>
                 <MermaidViewer
                   chart={resolvedChart}
                   diagrams={resolvedDiagrams}
@@ -170,7 +169,7 @@ export default function StudentLessonPage() {
               </div>
             )}
 
-            {/* Core Sections */}
+            {/* Sections */}
             <div className="space-y-4">
               {resolvedSections.map((sec, idx) => {
                 const secTitle = sec.title || sec.section_title || sec.heading || `Section ${idx + 1}`;
@@ -178,12 +177,12 @@ export default function StudentLessonPage() {
                 const checkpoint = sec.checkpoint_question || sec.check_for_understanding_prompt;
 
                 return (
-                  <div key={idx} className="p-5 rounded-lg bg-slate-900/40 border border-slate-800 space-y-2.5">
-                    <h3 className="text-sm font-bold text-white">{secTitle}</h3>
-                    <div className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{secBody}</div>
+                  <div key={idx} className="p-5 rounded bg-[#18181b] border border-[#27272a] space-y-2.5">
+                    <h3 className="text-sm font-semibold text-white">{secTitle}</h3>
+                    <div className="text-xs text-[#fafafa] leading-relaxed whitespace-pre-wrap">{secBody}</div>
                     {checkpoint && (
-                      <div className="p-3 rounded bg-cyan-950/30 border border-cyan-500/20 text-xs text-cyan-200 font-medium">
-                        💡 <strong>Concept Checkpoint:</strong> {checkpoint}
+                      <div className="p-3 rounded bg-[#121215] border border-[#3f3f46] text-xs text-white">
+                        <strong className="block mb-0.5 text-[#a1a1aa]">Check for Understanding:</strong> {checkpoint}
                       </div>
                     )}
                   </div>
@@ -192,17 +191,17 @@ export default function StudentLessonPage() {
             </div>
 
             {lessonPackage?.primary_text?.conclusion && (
-              <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800">
-                <h4 className="font-bold text-slate-300 text-xs mb-1">Conclusion</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">{lessonPackage.primary_text.conclusion}</p>
+              <div className="p-4 rounded bg-[#18181b] border border-[#27272a]">
+                <h4 className="font-semibold text-white text-xs mb-1">Conclusion</h4>
+                <p className="text-xs text-[#a1a1aa] leading-relaxed">{lessonPackage.primary_text.conclusion}</p>
               </div>
             )}
 
             {/* Quizzes */}
             {resolvedQuestions.length > 0 && (
-              <div className="pt-6 border-t border-slate-800 space-y-4">
+              <div className="pt-6 border-t border-[#27272a] space-y-4">
                 <h3 className="text-sm font-bold text-white">
-                  {lessonPackage?.assessment?.quiz_title || 'Concept Mastery Checkpoints'}
+                  {lessonPackage?.assessment?.quiz_title || 'Practice Questions'}
                 </h3>
                 {resolvedQuestions.map((q, i) => (
                   <QuizCard key={q.question_id || q.id || i} question={q} index={i} onAnswerSubmit={handleQuizAnswer} />
@@ -210,29 +209,29 @@ export default function StudentLessonPage() {
               </div>
             )}
 
-            {/* Complete Sitting Button */}
+            {/* Complete Lesson Button */}
             {!sessionEvaluation ? (
               <button
                 onClick={handleFinishLesson}
-                className="btn-primary w-full py-3 text-xs flex items-center justify-center gap-2"
+                className="ui-btn-primary w-full py-3 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Complete Sitting & Evaluate Cognitive Signals</span>
+                <span>Complete Lesson & Save Progress</span>
               </button>
             ) : (
-              <div className="p-5 rounded-lg bg-emerald-950/20 border border-emerald-500/30 space-y-3">
-                <h4 className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-                  <Award className="h-4 w-4 text-emerald-400" />
-                  Workflow 3 Session Diagnostic Complete
+              <div className="p-5 rounded bg-[#18181b] border border-emerald-500/30 space-y-3">
+                <h4 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                  <Award className="h-4 w-4" />
+                  Lesson Completed
                 </h4>
                 <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">Comprehension Score:</span>
+                  <div className="p-3 rounded bg-[#121215] border border-[#27272a]">
+                    <span className="text-[#a1a1aa] block text-[11px]">Quiz Score:</span>
                     <strong className="text-emerald-400 text-base font-mono">{sessionEvaluation.comprehension_score}%</strong>
                   </div>
-                  <div className="p-3 rounded bg-slate-900 border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">Cognitive Load Index:</span>
-                    <strong className="text-cyan-400 text-base font-mono">{sessionEvaluation.cognitive_load_index}</strong>
+                  <div className="p-3 rounded bg-[#121215] border border-[#27272a]">
+                    <span className="text-[#a1a1aa] block text-[11px]">Pacing & Load:</span>
+                    <strong className="text-white text-base font-mono">{sessionEvaluation.cognitive_load_index}</strong>
                   </div>
                 </div>
               </div>
@@ -240,15 +239,12 @@ export default function StudentLessonPage() {
           </div>
         </div>
 
-        {/* Right 5 Cols: Aura Socratic Tutor Chat */}
-        <div className="lg:col-span-5 flex flex-col h-[680px] panel overflow-hidden sticky top-6">
-          <div className="p-3.5 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400"></span>
-              <div>
-                <h3 className="text-xs font-bold text-white">Aura &bull; Socratic Tutor</h3>
-                <p className="text-[10px] text-slate-400">Empathetic Pedagogical Dialogue</p>
-              </div>
+        {/* Right Column: Aura Tutor Chat */}
+        <div className="lg:col-span-5 flex flex-col h-[680px] ui-panel overflow-hidden sticky top-6">
+          <div className="p-3.5 border-b border-[#27272a] bg-[#121215] flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-semibold text-white">Aura (Tutor)</h3>
+              <p className="text-[10px] text-[#71717a]">Ask questions anytime as you read</p>
             </div>
           </div>
 
@@ -259,38 +255,38 @@ export default function StudentLessonPage() {
                 className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed ${
+                  className={`max-w-[85%] rounded p-3 text-xs leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-none'
-                      : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none whitespace-pre-wrap'
+                      ? 'bg-white text-black font-medium'
+                      : 'bg-[#18181b] border border-[#27272a] text-[#fafafa] whitespace-pre-wrap'
                   }`}
                 >
                   {m.content}
                 </div>
-                <span className="text-[10px] text-slate-500 mt-0.5 px-1">{m.timestamp}</span>
+                <span className="text-[10px] text-[#71717a] mt-0.5 px-1">{m.timestamp}</span>
               </div>
             ))}
 
             {sendingChat && (
-              <div className="flex items-center gap-2 text-xs text-indigo-300 p-2 rounded bg-indigo-950/20">
+              <div className="flex items-center gap-2 text-xs text-[#a1a1aa] p-2 rounded bg-[#18181b]">
                 <RefreshCw className="h-3 w-3 animate-spin" />
-                <span>Aura is thinking...</span>
+                <span>Aura is typing...</span>
               </div>
             )}
           </div>
 
-          <form onSubmit={handleSendChat} className="p-2.5 border-t border-slate-800 bg-slate-900/40 flex gap-2">
+          <form onSubmit={handleSendChat} className="p-2.5 border-t border-[#27272a] bg-[#121215] flex gap-2">
             <input
               type="text"
               value={inputMsg}
               onChange={(e) => setInputMsg(e.target.value)}
-              placeholder="Ask Aura a question about the lesson..."
-              className="flex-1 rounded-md bg-slate-900 border border-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              placeholder="Ask a question about this lesson..."
+              className="flex-1 rounded bg-[#18181b] border border-[#27272a] px-3 py-2 text-xs text-white placeholder-[#71717a] focus:outline-none focus:border-[#3f3f46]"
             />
             <button
               type="submit"
               disabled={sendingChat || !inputMsg.trim()}
-              className="btn-primary px-3 py-2 text-xs"
+              className="ui-btn-primary"
             >
               <Send className="h-3.5 w-3.5" />
             </button>

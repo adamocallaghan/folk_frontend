@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { BookOpen, ArrowRight, Clock, RefreshCw, Award, Sparkles } from "lucide-react";
-import { listAllCurricula, CurriculumSummary } from "@/lib/api";
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { BookOpen, ArrowRight, Clock, RefreshCw } from 'lucide-react';
+import { listAllCurricula, CurriculumSummary } from '@/lib/api';
 
 export default function StudentHubPage() {
   const [lessons, setLessons] = useState<CurriculumSummary[]>([]);
@@ -16,81 +16,70 @@ export default function StudentHubPage() {
         setLoading(false);
       })
       .catch((err) => {
-        console.warn("Failed to load curricula:", err);
+        console.warn('Failed to load lessons:', err);
         setLoading(false);
       });
   }, []);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#27272a]">
         <div>
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400">
-            Student Portal &bull; Workflows 2 & 3
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-1">
-            Interactive Learning Chamber
+          <h1 className="text-2xl font-semibold text-white tracking-tight">
+            Available Lessons
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Learn with <strong>Aura</strong>, your empathetic Socratic tutor. Choose any live lesson from Firestore.
+          <p className="text-xs text-[#a1a1aa] mt-0.5">
+            Select a topic to start reading, view diagrams, and answer check-for-understanding questions.
           </p>
         </div>
 
-        <span className="text-xs text-slate-400 font-mono bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5">
+        <span className="ui-tag">
           Student ID: <strong className="text-white">student_demo_101</strong>
         </span>
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-          <RefreshCw className="h-4 w-4 animate-spin text-cyan-400" />
-          Loading live curricula from Firestore...
+        <div className="py-16 text-center text-xs text-[#71717a] flex items-center justify-center gap-2">
+          <RefreshCw className="h-4 w-4 animate-spin text-white" />
+          <span>Loading lesson catalog...</span>
         </div>
       ) : lessons.length === 0 ? (
-        <div className="folk-card p-12 text-center text-xs text-slate-500">
-          No lessons found in Firestore. Generate one in Curriculum Studio first.
+        <div className="ui-panel p-12 text-center text-xs text-[#71717a]">
+          No lessons found. Create a lesson in the Curriculum Studio first.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {lessons.map((lesson) => (
             <Link
               key={lesson.package_id}
               href={`/student/lesson/${lesson.package_id}`}
-              className="folk-card-interactive p-6 flex flex-col justify-between border border-white/10 group space-y-4 relative"
+              className="ui-panel p-5 flex flex-col justify-between hover:border-[#3f3f46] hover:bg-[#18181b] transition-all group space-y-4"
             >
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 font-semibold truncate max-w-[180px]">
+                  <span className="ui-tag truncate max-w-[170px]">
                     {lesson.package_id}
                   </span>
-                  <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {lesson.duration_minutes || 25}m
+                  <span className="text-[11px] text-[#71717a] flex items-center gap-1 font-mono">
+                    <Clock className="h-3 w-3" /> {lesson.duration_minutes || 25} min
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
+                <h3 className="text-sm font-semibold text-white group-hover:text-white leading-snug">
                   {lesson.title}
                 </h3>
 
-                <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 pt-1">
-                  <span className="bg-white/5 px-2 py-0.5 rounded text-slate-300">
-                    {lesson.target_age_group}
-                  </span>
-                  {lesson.has_diagram && (
-                    <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">
-                      Visual Diagram
-                    </span>
-                  )}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px] text-[#a1a1aa]">
+                  <span className="ui-tag text-[#fafafa]">{lesson.target_age_group}</span>
+                  {lesson.has_diagram && <span className="ui-tag">Diagram</span>}
                   {lesson.question_count > 0 && (
-                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded">
-                      {lesson.question_count} Quizzes
-                    </span>
+                    <span className="ui-tag">{lesson.question_count} Questions</span>
                   )}
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs font-semibold text-cyan-400 group-hover:text-cyan-300">
-                <span>Enter Lesson</span>
+              <div className="pt-3 border-t border-[#27272a] flex items-center justify-between text-xs font-medium text-white">
+                <span>Start Lesson</span>
                 <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
