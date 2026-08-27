@@ -135,7 +135,7 @@ export default function CurriculumStudioPage() {
 
       {/* Main Grid: Left Library Sidebar | Right Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Saved Library */}
+        {/* Left Column: Saved Library without red shadow */}
         <div className="lg:col-span-4 border border-[#1a1714] bg-[#e9e2d5] p-4 space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]">
             <h3 className="text-xs font-bold text-[#1a1714] uppercase tracking-wider flex items-center gap-1.5 font-mono">
@@ -163,7 +163,7 @@ export default function CurriculumStudioPage() {
                     onClick={() => loadPackage(item.package_id)}
                     className={`w-full text-left p-3 border text-xs transition-all flex flex-col gap-1 ${
                       isSelected
-                        ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714] shadow-[2px_2px_0px_0px_#c84b2f]'
+                        ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]'
                         : 'bg-[#f5f0e8] border-[#1a1714] text-[#1a1714] hover:bg-[#ebd9be]'
                     }`}
                   >
@@ -176,7 +176,7 @@ export default function CurriculumStudioPage() {
                       </span>
                     </div>
 
-                    <h4 className="font-bold font-serif line-clamp-1">{item.title}</h4>
+                    <h4 className="font-bold font-serif line-clamp-1 text-sm">{item.title}</h4>
 
                     <div className={`flex items-center gap-2 text-[10px] ${isSelected ? 'text-[#e8e0d0]' : 'text-[#8a8075]'}`}>
                       <span>{item.target_age_group}</span>
@@ -348,42 +348,42 @@ export default function CurriculumStudioPage() {
                 )}
               </div>
 
-              {/* Tab 1: Lesson Content */}
+              {/* Tab 1: Lesson Content with Unified Typography */}
               {activeTab === 'text' && (
-                <div className="space-y-5 text-xs text-[#1a1714] leading-relaxed">
+                <div className="space-y-6 text-[#1a1714] leading-relaxed">
                   {activePackage.framework?.pedagogical_hook && (
                     <div className="p-4 bg-[#ebd9be] border border-[#1a1714]">
-                      <h4 className="font-bold text-[#1a1714] mb-1 font-serif">Pedagogical Hook:</h4>
-                      <p className="text-[#1a1714]/90">{activePackage.framework.pedagogical_hook}</p>
+                      <h4 className="font-bold text-[#1a1714] mb-1 font-serif text-sm">Pedagogical Hook:</h4>
+                      <p className="text-sm text-[#1a1714]/90 font-sans leading-relaxed">{activePackage.framework.pedagogical_hook}</p>
                     </div>
                   )}
 
                   {activePackage.primary_text?.introduction && (
                     <div className="p-4 bg-[#f5f0e8] border border-[#1a1714] space-y-1">
                       <h4 className="font-bold text-[#1a1714] text-xs uppercase font-mono tracking-wider">Introduction</h4>
-                      <p className="text-[#1a1714] text-sm leading-relaxed">{activePackage.primary_text.introduction}</p>
+                      <p className="text-sm text-[#1a1714] font-sans leading-relaxed">{activePackage.primary_text.introduction}</p>
                     </div>
                   )}
 
-                  {/* All Core Sections with Markdown Rendering */}
+                  {/* Core Sections */}
                   {resolvedSections.map((sec, idx) => {
                     const secTitle = sec.title || sec.section_title || sec.heading || `Section ${idx + 1}`;
                     const secBody = sec.body_markdown || sec.body_text || sec.content || '';
                     const checkpoint = sec.checkpoint_question || sec.check_for_understanding_prompt;
 
                     return (
-                      <div key={idx} className="p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-bold text-sm text-[#1a1714] font-serif">{secTitle}</h3>
+                      <div key={idx} className="p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]/15">
+                          <h3 className="font-bold text-base text-[#1a1714] font-serif">{secTitle}</h3>
                           {sec.estimated_minutes && (
-                            <span className="text-[10px] font-mono text-[#8a8075]">{sec.estimated_minutes} min</span>
+                            <span className="text-[11px] font-mono text-[#8a8075]">{sec.estimated_minutes} min</span>
                           )}
                         </div>
 
                         <MarkdownRenderer content={secBody} />
 
                         {sec.key_concepts && sec.key_concepts.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-2">
+                          <div className="flex flex-wrap gap-1.5 pt-1">
                             {sec.key_concepts.map((kc, i) => (
                               <span key={i} className="tag-ink">
                                 #{kc}
@@ -393,8 +393,8 @@ export default function CurriculumStudioPage() {
                         )}
 
                         {checkpoint && (
-                          <div className="p-3 bg-[#cbd7c7] border border-[#1a1714] text-[#1a1714] font-medium">
-                            <strong>Check for Understanding:</strong> {checkpoint}
+                          <div className="p-3 bg-[#cbd7c7] border border-[#1a1714] text-xs text-[#1a1714]">
+                            <strong className="block mb-0.5 font-mono">Check for Understanding:</strong> {checkpoint}
                           </div>
                         )}
                       </div>
@@ -404,7 +404,7 @@ export default function CurriculumStudioPage() {
                   {activePackage.primary_text?.conclusion && (
                     <div className="p-4 bg-[#f5f0e8] border border-[#1a1714] space-y-1">
                       <h4 className="font-bold text-[#1a1714] text-xs uppercase font-mono tracking-wider">Conclusion</h4>
-                      <p className="text-[#1a1714] text-sm leading-relaxed">{activePackage.primary_text.conclusion}</p>
+                      <p className="text-sm text-[#1a1714] font-sans leading-relaxed">{activePackage.primary_text.conclusion}</p>
                     </div>
                   )}
                 </div>
@@ -425,7 +425,7 @@ export default function CurriculumStudioPage() {
               {activeTab === 'quiz' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-[#1a1714] font-serif">
+                    <h3 className="text-base font-bold text-[#1a1714] font-serif">
                       {activePackage.assessment?.quiz_title || 'Assessment Checkpoints'}
                     </h3>
                     <span className="text-xs text-[#8a8075] font-mono">
