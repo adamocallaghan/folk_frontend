@@ -2,30 +2,52 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, ArrowRight, Clock, RefreshCw } from 'lucide-react';
-import { listAllCurricula, CurriculumSummary } from '@/lib/api';
+import { BookOpen, ArrowRight, Clock, RefreshCw, UserCheck } from 'lucide-react';
+import { listAllCurricula, listStudentProfiles, CurriculumSummary } from '@/lib/api';
+import { LongitudinalProfile } from '@/types';
 
 export default function StudentHubPage() {
   const [lessons, setLessons] = useState<CurriculumSummary[]>([]);
+  const [students, setStudents] = useState<LongitudinalProfile[]>([]);
+  const [activeStudentId, setActiveStudentId] = useState<string>('g1_sarah_jenkins');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listAllCurricula()
-      .then((data) => {
-        setLessons(data.curricula || []);
+    // Check localStorage
+    const saved = localStorage.getItem('folk_active_student_id');
+    if (saved) setActiveStudentId(saved);
+
+    Promise.all([
+      listAllCurricula().catch(() => ({ curricula: [] })),
+      listStudentProfiles().catch(() => ({ profiles: [] })),
+    ])
+      .then(([curriculaRes, studentsRes]) => {
+        setLessons(curriculaRes.curricula || []);
+        const profs = studentsRes.profiles || [];
+        setStudents(profs);
+        if (profs.length > 0 && !saved) {
+          setActiveStudentId(profs[0].student_id);
+          localStorage.setItem('folk_active_student_id', profs[0].student_id);
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.warn('Failed to load lessons:', err);
+        console.warn('Failed to load hub data:', err);
         setLoading(false);
       });
   }, []);
 
+  const handleStudentChange = (id: string) => {
+    setActiveStudentId(id);
+    localStorage.setItem('folk_active_student_id', id);
+  };
+
   const bentoColors = ['bg-[#ebd9be]', 'bg-[#cbd7c7]', 'bg-[#ebd4cc]', 'bg-[#cbd9db]', 'bg-[#e9e2d5]'];
+  const activeStudentObj = students.find((s) => s.student_id === activeStudentId);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#1a1714]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1714]">
         <div>
           <span className="tag-ink mb-1">Student Portal</span>
           <h1 className="text-3xl font-bold text-[#1a1714] font-serif tracking-tight mt-1">
@@ -36,10 +58,42 @@ export default function StudentHubPage() {
           </p>
         </div>
 
-        <span className="tag-ink">
-          Student ID: <strong className="text-[#1a1714]">student_demo_101</strong>
-        </span>
+        {/* Student Switcher */}
+        <div className="flex flex-col sm:items-end gap-1.5">
+          <label className="text-[11px] font-mono font-bold text-[#1a1714] flex items-center gap-1">
+            <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> ACTIVE STUDENT (SIMULATION):
+          </label>
+          <select
+            value={activeStudentId}
+            onChange={(e) => handleStudentChange(e.target.value)}
+            className="border border-[#1a1714] bg-[#ffffff] px-3 py-1.5 text-xs text-[#1a1714] font-mono focus:outline-none"
+          >
+            {students.length > 0 ? (
+              students.map((st) => (
+                <option key={st.student_id} value={st.student_id}>
+                  {st.display_name || st.student_id} ({st.student_id})
+                </option>
+              ))
+            ) : (
+              <option value="student_demo_101">student_demo_101</option>
+            )}
+          </select>
+        </div>
       </div>
+
+      {activeStudentObj && (
+        <div className="p-3 bg-[#e9e2d5] border border-[#1a1714] flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <strong className="font-serif text-sm text-[#1a1714]">{activeStudentObj.display_name || activeStudentObj.student_id}</strong>
+            <span className="tag-ink">{activeStudentObj.reading_level || 'Grade 7-8'}</span>
+          </div>
+          {activeStudentObj.reading_difficulty_flags && activeStudentObj.reading_difficulty_flags.length > 0 && (
+            <div className="text-[11px] text-[#c84b2f] font-mono">
+              Accommodations: {activeStudentObj.reading_difficulty_flags.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="py-16 text-center text-xs text-[#8a8075] flex items-center justify-center gap-2">

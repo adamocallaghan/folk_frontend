@@ -3,17 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getCurriculumPackage, sendStudentChat, evaluateSession } from '@/lib/api';
-import { LessonPackage, ChatMessage, LessonSectionItem } from '@/types';
+import { getCurriculumPackage, sendStudentChat, evaluateSession, getStudentProfile } from '@/lib/api';
+import { LessonPackage, ChatMessage, LessonSectionItem, LongitudinalProfile } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw, UserCheck } from 'lucide-react';
 
 export default function StudentLessonPage() {
   const params = useParams();
   const packageId = params.id as string;
 
+  const [studentId, setStudentId] = useState('student_demo_101');
+  const [studentProfile, setStudentProfile] = useState<LongitudinalProfile | null>(null);
   const [lessonPackage, setLessonPackage] = useState<LessonPackage | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -22,20 +24,29 @@ export default function StudentLessonPage() {
   const [quizScore, setQuizScore] = useState<{ [qId: string]: boolean }>({});
   const [sessionEvaluation, setSessionEvaluation] = useState<any>(null);
 
-  const sessionId = `sess_${packageId}_student_demo_101`;
-  const studentId = 'student_demo_101';
+  const sessionId = `sess_${packageId}_${studentId}`;
 
   useEffect(() => {
-    getCurriculumPackage(packageId)
-      .then((data) => {
-        setLessonPackage(data.curriculum);
+    const saved = localStorage.getItem('folk_active_student_id');
+    const activeId = saved || 'student_demo_101';
+    setStudentId(activeId);
+
+    Promise.all([
+      getCurriculumPackage(packageId),
+      getStudentProfile(activeId).catch(() => null),
+    ])
+      .then(([currRes, profRes]) => {
+        setLessonPackage(currRes.curriculum);
+        if (profRes) setStudentProfile(profRes.profile);
         setLoading(false);
-        const title = data.curriculum.primary_text?.lesson_title || data.curriculum.framework?.topic || 'this lesson';
+
+        const title = currRes.curriculum.primary_text?.lesson_title || currRes.curriculum.framework?.topic || 'this lesson';
+        const name = profRes?.profile?.display_name || activeId;
         setMessages([
           {
             id: 'init_1',
             role: 'assistant',
-            content: `Hi! I'm Aura, your assistant for "${title}". As you read through the sections, feel free to ask me any questions if something is confusing.`,
+            content: `Hi ${name}! I'm Aura, your tutor for "${title}". As you read through the sections and diagrams, ask me anything if you get stuck or want a simpler explanation!`,
             timestamp: new Date().toLocaleTimeString(),
           },
         ]);
@@ -134,9 +145,14 @@ export default function StudentLessonPage() {
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Lessons</span>
         </Link>
-        <span className="tag-ink">
-          {packageId}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="tag-ink bg-[#ebd9be] border-[#1a1714] text-[#1a1714] flex items-center gap-1">
+            <UserCheck className="h-3 w-3" /> Student: {studentProfile?.display_name || studentId}
+          </span>
+          <span className="tag-ink">
+            {packageId}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -154,7 +170,7 @@ export default function StudentLessonPage() {
 
             {lessonPackage?.primary_text?.introduction && (
               <div className="p-4 bg-[#f5f0e8] border border-[#1a1714]">
-                <p className="text-sm text-[#1a1714] leading-relaxed">{lessonPackage.primary_text.introduction}</p>
+                <p className="text-sm text-[#1a1714] leading-relaxed font-sans">{lessonPackage.primary_text.introduction}</p>
               </div>
             )}
 
@@ -178,7 +194,7 @@ export default function StudentLessonPage() {
                 const checkpoint = sec.checkpoint_question || sec.check_for_understanding_prompt;
 
                 return (
-                  <div key={idx} className="p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-2.5">
+                  <div key={idx} className="p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-3">
                     <h3 className="text-base font-bold text-[#1a1714] font-serif">{secTitle}</h3>
                     <MarkdownRenderer content={secBody} />
                     {checkpoint && (
@@ -194,7 +210,7 @@ export default function StudentLessonPage() {
             {lessonPackage?.primary_text?.conclusion && (
               <div className="p-4 bg-[#f5f0e8] border border-[#1a1714]">
                 <h4 className="font-bold text-[#1a1714] text-xs mb-1 uppercase font-mono">Conclusion</h4>
-                <p className="text-xs text-[#1a1714] leading-relaxed">{lessonPackage.primary_text.conclusion}</p>
+                <p className="text-sm text-[#1a1714] font-sans leading-relaxed">{lessonPackage.primary_text.conclusion}</p>
               </div>
             )}
 
@@ -217,13 +233,13 @@ export default function StudentLessonPage() {
                 className="btn-ink w-full py-3.5 flex items-center justify-center gap-2 text-sm"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Complete Lesson & Save Progress</span>
+                <span>Complete Lesson & Save Progress for {studentProfile?.display_name || studentId}</span>
               </button>
             ) : (
               <div className="p-5 bg-[#cbd7c7] border border-[#1a1714] space-y-3">
                 <h4 className="text-sm font-bold text-[#1a1714] font-serif flex items-center gap-1.5">
                   <Award className="h-4 w-4" />
-                  Lesson Completed
+                  Lesson Completed for {studentProfile?.display_name || studentId}
                 </h4>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 bg-[#ffffff] border border-[#1a1714]">
@@ -245,7 +261,7 @@ export default function StudentLessonPage() {
           <div className="p-3.5 border-b border-[#1a1714] bg-[#e8e0d0] flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-[#1a1714] font-serif">Aura (Tutor)</h3>
-              <p className="text-[10px] text-[#8a8075]">Ask questions anytime as you read</p>
+              <p className="text-[10px] text-[#8a8075]">Tutoring {studentProfile?.display_name || studentId}</p>
             </div>
           </div>
 
