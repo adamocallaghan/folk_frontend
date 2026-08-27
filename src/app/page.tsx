@@ -15,68 +15,76 @@ export default function HomePage() {
   const sections = [
     {
       title: 'Curriculum Studio',
-      description: 'Generate complete, grade-appropriate lesson plans with reading materials, diagrams, and quizzes from your notes or syllabus.',
+      description: 'Author complete lesson plans with structured sections, conceptual diagrams, and assessment checks.',
       href: '/teacher/curriculum',
-      label: 'Teacher',
+      label: 'Teacher Workspace',
+      bgCard: 'bg-[#e9e2d5]',
       icon: Sparkles,
     },
     {
       title: 'Student Lessons',
-      description: 'Interactive reading modules with visual diagrams, step-by-step checks, and an on-demand tutor to answer questions.',
+      description: 'Guided reading modules with step-by-step checks and an on-demand Socratic assistant.',
       href: '/student',
-      label: 'Student',
+      label: 'Student Portal',
+      bgCard: 'bg-[#cbd7c7]',
       icon: BookOpen,
     },
     {
       title: 'Teacher Governance',
-      description: 'Review student comprehension profiles, identify recurring knowledge gaps, and approve targeted remediation strategies.',
+      description: 'Review longitudinal student understanding, analyze recurring points of friction, and approve remediation interventions.',
       href: '/teacher/governance',
-      label: 'Teacher',
+      label: 'Analytics & HITL',
+      bgCard: 'bg-[#ebd9be]',
       icon: ShieldCheck,
     },
   ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 space-y-10">
-      <div className="space-y-3 max-w-2xl">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-          Folk Learning System
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 space-y-12">
+      {/* Hero Header */}
+      <div className="space-y-4 max-w-2xl border-b border-[#1a1714] pb-8">
+        <span className="tag-ink">Pedagogical System</span>
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[#1a1714] font-serif leading-tight">
+          Adaptive Teaching & Tutoring
         </h1>
-        <p className="text-sm text-[#a1a1aa] leading-relaxed">
-          An adaptive teaching and tutoring workspace. Build structured curricula, guide student practice, and review student progress with AI assistance.
+        <p className="text-base text-[#8a8075] leading-relaxed">
+          Synthesize structured curricula, deliver interactive student lessons, and govern adaptive remediation plans.
         </p>
 
         <div className="flex flex-wrap gap-2 pt-2 text-xs">
-          <span className="ui-tag text-white">Database: Connected</span>
-          <span className="ui-tag text-white">Model: {healthData?.model || 'gemini-3.7-flash'}</span>
-          <span className="ui-tag text-emerald-400">Status: Operational</span>
+          <span className="tag-ink">DB: folk-agents-store</span>
+          <span className="tag-ink">Model: {healthData?.model || 'gemini-3.7-flash'}</span>
+          <span className="tag-ink">Cloud Run: us-east1</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {sections.map((s, i) => {
           const Icon = s.icon;
           return (
             <Link
               key={i}
               href={s.href}
-              className="ui-panel p-6 flex flex-col justify-between hover:border-[#3f3f46] hover:bg-[#18181b] transition-all group"
+              className={`p-6 flex flex-col justify-between border border-[#1a1714] ${s.bgCard} hover:shadow-[4px_4px_0px_0px_#1a1714] transition-all group`}
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-9 w-9 items-center justify-center rounded bg-[#18181b] border border-[#27272a] text-white">
+                  <div className="flex h-9 w-9 items-center justify-center bg-[#1a1714] text-[#f5f0e8]">
                     <Icon className="h-4 w-4" />
                   </div>
-                  <span className="ui-tag">{s.label}</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#1a1714]">
+                    {s.label}
+                  </span>
                 </div>
 
-                <h3 className="text-base font-semibold text-white">{s.title}</h3>
-                <p className="text-xs text-[#a1a1aa] leading-relaxed">{s.description}</p>
+                <h3 className="text-lg font-bold text-[#1a1714] font-serif">{s.title}</h3>
+                <p className="text-xs text-[#1a1714]/80 leading-relaxed">{s.description}</p>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-[#27272a] flex items-center justify-between text-xs font-medium text-white">
+              <div className="pt-6 mt-6 border-t border-[#1a1714] flex items-center justify-between text-xs font-bold text-[#1a1714]">
                 <span>Open {s.title}</span>
-                <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
           );

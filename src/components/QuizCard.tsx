@@ -43,22 +43,22 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
   };
 
   return (
-    <div className="panel p-5 space-y-4">
+    <div className="border border-[#1a1714] bg-[#ffffff] p-5 space-y-4">
       {/* Question Header & ID */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-indigo-600/20 text-indigo-400 font-mono text-[10px] font-bold">
-            Q{index + 1}
+          <span className="flex h-5 w-5 items-center justify-center bg-[#1a1714] text-[#f5f0e8] font-mono text-[10px] font-bold">
+            {index + 1}
           </span>
-          <span className="text-[11px] font-mono text-slate-500">{qId}</span>
+          <span className="text-[11px] font-mono text-[#8a8075]">{qId}</span>
         </div>
 
         {submitted && (
           <span
-            className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded ${
+            className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 border ${
               isCorrect
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                ? 'bg-[#cbd7c7] text-[#1a1714] border-[#1a1714]'
+                : 'bg-[#ebd4cc] text-[#1a1714] border-[#1a1714]'
             }`}
           >
             {isCorrect ? (
@@ -75,18 +75,18 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
       </div>
 
       {/* The Actual Question Prompt */}
-      <p className="text-sm font-medium text-slate-100 leading-relaxed">{promptText}</p>
+      <p className="text-sm font-semibold text-[#1a1714] leading-relaxed font-serif">{promptText}</p>
 
       {/* Options List */}
       {question.options && question.options.length > 0 ? (
         <div className="space-y-2">
           {question.options.map((opt, i) => {
             const isSelected = selectedOption === opt;
-            let btnClass = 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80';
+            let btnClass = 'bg-[#f5f0e8] border-[#1a1714] text-[#1a1714] hover:bg-[#e8e0d0]';
             if (isSelected) {
               btnClass = isCorrect
-                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
-                : 'bg-amber-950/40 border-amber-500/40 text-amber-200';
+                ? 'bg-[#cbd7c7] border-[#1a1714] font-bold text-[#1a1714]'
+                : 'bg-[#ebd4cc] border-[#1a1714] font-bold text-[#1a1714]';
             }
             return (
               <button
@@ -96,9 +96,9 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
                   setSelectedOption(opt);
                   handleSubmit(opt);
                 }}
-                className={`w-full text-left px-3.5 py-2.5 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${btnClass}`}
+                className={`w-full text-left px-3.5 py-2.5 border text-xs transition-all flex items-start gap-2.5 ${btnClass}`}
               >
-                <span className="font-mono font-semibold text-slate-500">{String.fromCharCode(65 + i)}.</span>
+                <span className="font-mono font-bold text-[#1a1714]">{String.fromCharCode(65 + i)}.</span>
                 <span className="leading-relaxed">{opt}</span>
               </button>
             );
@@ -113,12 +113,12 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
             value={customInput}
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            className="flex-1 rounded-lg bg-slate-900 border border-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="flex-1 border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] placeholder-[#8a8075] focus:outline-none"
           />
           <button
             onClick={() => handleSubmit()}
             disabled={submitted || !customInput.trim()}
-            className="btn-primary px-3.5 py-2 text-xs"
+            className="btn-ink px-4 py-2 text-xs"
           >
             Submit
           </button>
@@ -127,19 +127,19 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
 
       {/* Socratic Hint */}
       {hintText && (
-        <div className="pt-2 border-t border-slate-800">
+        <div className="pt-2 border-t border-[#1a1714]">
           <button
             onClick={() => setShowHint(!showHint)}
-            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+            className="flex items-center gap-1.5 text-xs text-[#c84b2f] font-semibold"
           >
             <HelpCircle className="h-3 w-3" />
-            <span>{showHint ? 'Hide Socratic Guidance' : 'Need a hint?'}</span>
+            <span>{showHint ? 'Hide Hint' : 'Need a hint?'}</span>
             <ChevronDown className={`h-3 w-3 transition-transform ${showHint ? 'rotate-180' : ''}`} />
           </button>
 
           {showHint && (
-            <div className="mt-2 p-3 rounded bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-200 leading-relaxed">
-              <strong className="block text-indigo-300 mb-0.5">Socratic Prompt:</strong>
+            <div className="mt-2 p-3 bg-[#ebd9be] border border-[#1a1714] text-xs text-[#1a1714] leading-relaxed">
+              <strong className="block mb-0.5">Hint:</strong>
               {hintText}
             </div>
           )}

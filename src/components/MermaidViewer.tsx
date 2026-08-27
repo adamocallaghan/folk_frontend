@@ -30,7 +30,7 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
     if (chart && list.length === 0) {
       list.push({
         id: 'single_diagram',
-        title: 'Architectural Model',
+        title: 'Diagram',
         caption: caption,
         code: chart,
       });
@@ -49,17 +49,16 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
   useEffect(() => {
     mermaid.initialize({
       startOnLoad: false,
-      theme: 'dark',
+      theme: 'neutral',
       themeVariables: {
-        darkMode: true,
-        background: '#121215',
-        primaryColor: '#ffffff',
-        primaryTextColor: '#fafafa',
-        primaryBorderColor: '#3f3f46',
-        lineColor: '#a1a1aa',
-        secondaryColor: '#27272a',
-        tertiaryColor: '#18181b',
-        fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif',
+        background: '#f5f0e8',
+        primaryColor: '#e8e0d0',
+        primaryTextColor: '#1a1714',
+        primaryBorderColor: '#1a1714',
+        lineColor: '#1a1714',
+        secondaryColor: '#cbd7c7',
+        tertiaryColor: '#ebd9be',
+        fontFamily: 'var(--font-sans)',
       },
       securityLevel: 'loose',
     });
@@ -99,8 +98,8 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
 
   if (allDiagrams.length === 0) {
     return (
-      <div className="ui-panel p-8 text-center text-xs text-[#71717a]">
-        No visual diagram blueprints generated for this module.
+      <div className="paper-card p-8 text-center text-xs text-[#8a8075]">
+        No diagrams generated for this module.
       </div>
     );
   }
@@ -116,16 +115,16 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
   };
 
   return (
-    <div className="ui-panel overflow-hidden">
+    <div className="border border-[#1a1714] bg-[#f5f0e8] overflow-hidden">
       {/* Selector & Actions */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#27272a] bg-[#121215]">
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#1a1714] bg-[#e8e0d0]">
         <div className="flex items-center gap-1.5 overflow-x-auto">
           {allDiagrams.map((d, i) => (
             <button
               key={d.id}
               onClick={() => setActiveIndex(i)}
-              className={`px-2.5 py-1 text-xs rounded transition-colors whitespace-nowrap ${
-                activeIndex === i ? 'bg-white text-black font-semibold' : 'text-[#a1a1aa] hover:text-white'
+              className={`px-3 py-1 text-xs font-semibold border transition-colors whitespace-nowrap ${
+                activeIndex === i ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
               }`}
             >
               {d.title}
@@ -136,27 +135,27 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowRawCode(!showRawCode)}
-            className="flex items-center gap-1 text-[11px] text-[#a1a1aa] hover:text-white px-2 py-1 rounded bg-[#18181b] border border-[#27272a]"
+            className="btn-paper flex items-center gap-1 text-[11px] py-1 px-2"
           >
             <Code className="h-3 w-3" />
             <span>{showRawCode ? 'Visual' : 'Code'}</span>
           </button>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 text-[11px] text-[#a1a1aa] hover:text-white px-2 py-1 rounded bg-[#18181b] border border-[#27272a]"
+            className="btn-paper flex items-center gap-1 text-[11px] py-1 px-2"
           >
-            {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+            {copied ? <Check className="h-3 w-3 text-emerald-700" /> : <Copy className="h-3 w-3" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
         </div>
       </div>
 
       {/* Stage */}
-      <div className="p-6 bg-[#09090b] flex flex-col items-center justify-center min-h-[260px] overflow-x-auto">
+      <div className="p-6 bg-[#f5f0e8] flex flex-col items-center justify-center min-h-[260px] overflow-x-auto">
         {showRawCode || errorMsg ? (
           <div className="w-full">
-            {errorMsg && <p className="text-xs text-amber-400 mb-2 font-mono">{errorMsg}</p>}
-            <pre className="p-4 rounded bg-[#121215] border border-[#27272a] text-xs font-mono text-[#fafafa] overflow-x-auto leading-relaxed">
+            {errorMsg && <p className="text-xs text-[#c84b2f] mb-2 font-mono">{errorMsg}</p>}
+            <pre className="p-4 bg-[#e8e0d0] border border-[#1a1714] text-xs font-mono text-[#1a1714] overflow-x-auto leading-relaxed">
               {activeCode}
             </pre>
           </div>
@@ -166,14 +165,14 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
             dangerouslySetInnerHTML={{ __html: svgOutput }}
           />
         ) : (
-          <div className="text-xs text-[#71717a]">Rendering diagram layout...</div>
+          <div className="text-xs text-[#8a8075]">Rendering diagram...</div>
         )}
       </div>
 
       {/* Caption */}
       {activeDiagram?.caption && (
-        <div className="px-3.5 py-2 bg-[#121215] border-t border-[#27272a] text-xs text-[#a1a1aa]">
-          <strong className="text-white">Model Description:</strong> {activeDiagram.caption}
+        <div className="px-3.5 py-2 bg-[#e8e0d0] border-t border-[#1a1714] text-xs text-[#1a1714]">
+          <strong>Description:</strong> {activeDiagram.caption}
         </div>
       )}
     </div>

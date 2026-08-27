@@ -65,7 +65,7 @@ export default function TeacherGovernancePage() {
             {
               rule_id: 'rule_visual_01',
               action_type: 'insert_visual_scaffold',
-              description: 'Render dual-coded structural diagrams before numerical formulas',
+              description: 'Render structural diagrams before numerical formulas',
             },
             {
               rule_id: 'rule_analogy_02',
@@ -103,24 +103,22 @@ export default function TeacherGovernancePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#27272a]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1714]">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="ui-tag">Workflow 4 &bull; Human-In-The-Loop Governance</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Teacher Governance & Copilot</h1>
-          <p className="text-xs text-[#a1a1aa]">
-            Collaborative discovery with AI Strategist <strong>Athena</strong>. Review cognitive friction maps and approve remediation plans.
+          <span className="tag-ink mb-1">Human-In-The-Loop Governance</span>
+          <h1 className="text-3xl font-bold text-[#1a1714] font-serif tracking-tight mt-1">Teacher Governance & Copilot</h1>
+          <p className="text-xs text-[#8a8075]">
+            Review student comprehension profiles and approve targeted remediation strategies with Athena.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs text-[#a1a1aa]">Student ID:</label>
+          <label className="text-xs font-mono font-bold text-[#1a1714]">STUDENT ID:</label>
           <input
             type="text"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-            className="rounded bg-[#18181b] border border-[#27272a] px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3f3f46]"
+            className="border border-[#1a1714] bg-[#ffffff] px-3 py-1.5 text-xs text-[#1a1714] font-mono focus:outline-none"
           />
         </div>
       </div>
@@ -131,23 +129,23 @@ export default function TeacherGovernancePage() {
           {profile ? (
             <CognitiveRadar profile={profile} />
           ) : (
-            <div className="ui-panel p-8 text-center text-xs text-[#71717a]">Loading student profile...</div>
+            <div className="paper-card p-8 text-center text-xs text-[#8a8075]">Loading student profile...</div>
           )}
 
           {/* HITL Card */}
           {stagedPlan && (
-            <div className="ui-panel p-5 space-y-4 border border-[#3f3f46]">
-              <div className="flex items-center justify-between pb-2 border-b border-[#27272a]">
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-white" /> Staged Remediation Gate (HITL)
+            <div className="border border-[#1a1714] bg-[#ebd9be] p-5 space-y-4 shadow-[4px_4px_0px_0px_#1a1714]">
+              <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]">
+                <h3 className="text-xs font-bold text-[#1a1714] uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                  <ShieldCheck className="h-4 w-4 text-[#c84b2f]" /> Proposed Remediation Plan
                 </h3>
-                <span className="ui-tag">{stagedPlan.plan_id}</span>
+                <span className="tag-ink">{stagedPlan.plan_id}</span>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3 text-xs text-[#1a1714]">
                 <div>
-                  <strong className="text-white block mb-1">Target Gaps:</strong>
-                  <ul className="list-disc pl-5 space-y-0.5 text-[#a1a1aa]">
+                  <strong className="block mb-1 font-mono">TARGET GAPS:</strong>
+                  <ul className="list-disc pl-5 space-y-0.5 text-[#1a1714]/90">
                     {stagedPlan.identified_learning_gaps.map((g, i) => (
                       <li key={i}>{g}</li>
                     ))}
@@ -155,32 +153,32 @@ export default function TeacherGovernancePage() {
                 </div>
 
                 <div>
-                  <strong className="text-white block mb-1">Proposed Interventions:</strong>
+                  <strong className="block mb-1 font-mono">PROPOSED INTERVENTIONS:</strong>
                   <div className="space-y-1.5">
                     {stagedPlan.proposed_interventions.map((rule, i) => (
-                      <div key={i} className="p-2.5 rounded bg-[#18181b] border border-[#27272a] font-mono text-[11px] text-[#fafafa]">
+                      <div key={i} className="p-2.5 bg-[#f5f0e8] border border-[#1a1714] font-mono text-[11px]">
                         <strong>{rule.action_type}:</strong> {rule.description}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-2.5 rounded bg-[#18181b] border border-[#27272a] text-[#fafafa]">
+                <div className="p-2.5 bg-[#cbd7c7] border border-[#1a1714]">
                   <strong>Expected Outcome:</strong> {stagedPlan.expected_outcome}
                 </div>
               </div>
 
               {planApproved === null ? (
-                <div className="flex gap-2 pt-2 border-t border-[#27272a]">
-                  <button onClick={() => handleApprovePlan(true)} className="ui-btn-primary flex-1 flex items-center justify-center gap-1">
+                <div className="flex gap-2 pt-2 border-t border-[#1a1714]">
+                  <button onClick={() => handleApprovePlan(true)} className="btn-ink flex-1 flex items-center justify-center gap-1">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Approve & Sync Rule
                   </button>
-                  <button onClick={() => handleApprovePlan(false)} className="ui-btn-secondary flex items-center justify-center gap-1">
+                  <button onClick={() => handleApprovePlan(false)} className="btn-paper flex items-center justify-center gap-1">
                     <XCircle className="h-3.5 w-3.5" /> Reject
                   </button>
                 </div>
               ) : (
-                <div className="p-2.5 rounded bg-[#18181b] border border-[#27272a] text-xs font-semibold text-center text-emerald-400">
+                <div className="p-2.5 border border-[#1a1714] bg-[#cbd7c7] text-xs font-bold text-center text-[#1a1714]">
                   {planApproved ? 'Approved and synced to Firestore' : 'Remediation plan rejected'}
                 </div>
               )}
@@ -189,57 +187,57 @@ export default function TeacherGovernancePage() {
         </div>
 
         {/* Right: Athena Dialogue */}
-        <div className="lg:col-span-6 flex flex-col h-[680px] ui-panel overflow-hidden">
-          <div className="p-3.5 border-b border-[#27272a] bg-[#121215] flex items-center justify-between">
+        <div className="lg:col-span-6 flex flex-col h-[680px] border border-[#1a1714] bg-[#ffffff] overflow-hidden">
+          <div className="p-3.5 border-b border-[#1a1714] bg-[#e8e0d0] flex items-center justify-between">
             <div>
-              <h3 className="text-xs font-bold text-white">Athena &bull; Teacher AI Strategist</h3>
-              <p className="text-[10px] text-[#71717a]">Longitudinal analysis and adaptive remediation drafting</p>
+              <h3 className="text-xs font-bold text-[#1a1714] font-serif">Athena (Teaching Assistant)</h3>
+              <p className="text-[10px] text-[#8a8075]">Longitudinal analysis and adaptive remediation</p>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f5f0e8]">
             {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center text-[#71717a] space-y-2 p-6">
-                <MessageSquare className="h-6 w-6 text-[#a1a1aa]" />
-                <p className="text-xs text-white font-medium">Start Teacher Discovery</p>
-                <p className="text-[11px] text-[#71717a] max-w-xs">
-                  Ask Athena for student diagnostic trends or request a custom remediation proposal.
+              <div className="h-full flex flex-col items-center justify-center text-center text-[#8a8075] space-y-2 p-6">
+                <MessageSquare className="h-6 w-6 text-[#1a1714]" />
+                <p className="text-xs text-[#1a1714] font-bold font-serif">Start Teacher Discovery</p>
+                <p className="text-[11px] text-[#8a8075] max-w-xs">
+                  Ask Athena about student progress trends or request a custom remediation proposal.
                 </p>
               </div>
             ) : (
               messages.map((m) => (
                 <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div
-                    className={`max-w-[85%] rounded p-3 text-xs leading-relaxed ${
+                    className={`max-w-[85%] p-3 text-xs leading-relaxed border border-[#1a1714] ${
                       m.role === 'user'
-                        ? 'bg-white text-black font-medium'
-                        : 'bg-[#18181b] border border-[#27272a] text-white whitespace-pre-wrap'
+                        ? 'bg-[#1a1714] text-[#f5f0e8]'
+                        : 'bg-[#ffffff] text-[#1a1714] whitespace-pre-wrap shadow-[2px_2px_0px_0px_#1a1714]'
                     }`}
                   >
                     {m.content}
                   </div>
-                  <span className="text-[10px] text-[#71717a] mt-0.5 px-1">{m.timestamp}</span>
+                  <span className="text-[10px] text-[#8a8075] mt-0.5 px-1 font-mono">{m.timestamp}</span>
                 </div>
               ))
             )}
 
             {loadingChat && (
-              <div className="flex items-center gap-2 text-xs text-[#a1a1aa] p-2 rounded bg-[#18181b]">
-                <RefreshCw className="h-3 w-3 animate-spin" />
+              <div className="flex items-center gap-2 text-xs text-[#1a1714] p-2 bg-[#ebd9be] border border-[#1a1714]">
+                <RefreshCw className="h-3 w-3 animate-spin text-[#c84b2f]" />
                 <span>Athena is analyzing trends...</span>
               </div>
             )}
           </div>
 
-          <form onSubmit={handleSendMessage} className="p-2.5 border-t border-[#27272a] bg-[#121215] flex gap-2">
+          <form onSubmit={handleSendMessage} className="p-2.5 border-t border-[#1a1714] bg-[#e8e0d0] flex gap-2">
             <input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Ask Athena for pedagogical insights..."
-              className="flex-1 rounded bg-[#18181b] border border-[#27272a] px-3 py-2 text-xs text-white placeholder-[#71717a] focus:outline-none focus:border-[#3f3f46]"
+              className="flex-1 border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] placeholder-[#8a8075] focus:outline-none"
             />
-            <button type="submit" disabled={loadingChat || !inputMessage.trim()} className="ui-btn-primary">
+            <button type="submit" disabled={loadingChat || !inputMessage.trim()} className="btn-ink">
               <Send className="h-3.5 w-3.5" />
             </button>
           </form>
