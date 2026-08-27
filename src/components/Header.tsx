@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { fetchHealth } from '@/lib/api';
-import { BookOpen, Sparkles, ShieldCheck } from 'lucide-react';
+import { BookOpen, Sparkles, ShieldCheck, Users } from 'lucide-react';
 
 export default function Header() {
   const pathname = usePathname();
@@ -18,6 +18,7 @@ export default function Header() {
 
   const navLinks = [
     { name: 'Curriculum Studio', href: '/teacher/curriculum', icon: Sparkles },
+    { name: 'Student Profiles', href: '/teacher/students', icon: Users },
     { name: 'Student Lessons', href: '/student', icon: BookOpen },
     { name: 'Teacher Governance', href: '/teacher/governance', icon: ShieldCheck },
   ];

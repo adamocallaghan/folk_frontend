@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, BookOpen, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Sparkles, BookOpen, ShieldCheck, Users, ArrowRight } from 'lucide-react';
 import { fetchHealth } from '@/lib/api';
 
 export default function HomePage() {
@@ -15,15 +15,23 @@ export default function HomePage() {
   const sections = [
     {
       title: 'Curriculum Studio',
-      description: 'Author complete lesson plans with structured sections, conceptual diagrams, and assessment checks.',
+      description: 'Author complete lesson plans with structured sections, conceptual diagrams, quizzes, and personalized student adaptations.',
       href: '/teacher/curriculum',
       label: 'Teacher Workspace',
       bgCard: 'bg-[#e9e2d5]',
       icon: Sparkles,
     },
     {
+      title: 'Student Profiles',
+      description: 'Configure reading difficulty flags, learning modalities, and teacher accommodations to guide adaptive curriculum synthesis.',
+      href: '/teacher/students',
+      label: 'Teacher Workspace',
+      bgCard: 'bg-[#ebd4cc]',
+      icon: Users,
+    },
+    {
       title: 'Student Lessons',
-      description: 'Guided reading modules with step-by-step checks and an on-demand Socratic assistant.',
+      description: 'Guided reading modules with step-by-step checks, visual diagrams, and an on-demand Socratic assistant.',
       href: '/student',
       label: 'Student Portal',
       bgCard: 'bg-[#cbd7c7]',
@@ -48,7 +56,7 @@ export default function HomePage() {
           Adaptive Teaching & Tutoring
         </h1>
         <p className="text-base text-[#8a8075] leading-relaxed">
-          Synthesize structured curricula, deliver interactive student lessons, and govern adaptive remediation plans.
+          Synthesize structured curricula, target individual student strengths, deliver interactive student lessons, and govern adaptive remediation plans.
         </p>
 
         <div className="flex flex-wrap gap-2 pt-2 text-xs">
@@ -59,7 +67,7 @@ export default function HomePage() {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {sections.map((s, i) => {
           const Icon = s.icon;
           return (

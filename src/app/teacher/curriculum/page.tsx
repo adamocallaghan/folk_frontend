@@ -8,15 +8,17 @@ import {
   RefreshCw,
   Clock,
   CheckCircle2,
+  UserCheck,
 } from 'lucide-react';
-import { generateCurriculum, listAllCurricula, getCurriculumPackage, CurriculumSummary } from '@/lib/api';
-import { LessonPackage, LessonSectionItem, AudioSegmentItem } from '@/types';
+import { generateCurriculum, listAllCurricula, getCurriculumPackage, listStudentProfiles, CurriculumSummary } from '@/lib/api';
+import { LessonPackage, LessonSectionItem, AudioSegmentItem, LongitudinalProfile } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export default function CurriculumStudioPage() {
   const [curriculaList, setCurriculaList] = useState<CurriculumSummary[]>([]);
+  const [students, setStudents] = useState<LongitudinalProfile[]>([]);
   const [selectedPkgId, setSelectedPkgId] = useState<string | null>(null);
   const [activePackage, setActivePackage] = useState<LessonPackage | null>(null);
   const [loadingList, setLoadingList] = useState(true);
@@ -26,6 +28,7 @@ export default function CurriculumStudioPage() {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [topic, setTopic] = useState('Quantum Computing & Superposition Fundamentals');
   const [ageGroup, setAgeGroup] = useState('Grade 9-10 (14-16yo)');
+  const [targetStudentId, setTargetStudentId] = useState<string>('');
   const [enableAudio, setEnableAudio] = useState(true);
   const [enableSimplification, setEnableSimplification] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -37,10 +40,14 @@ export default function CurriculumStudioPage() {
   const refreshList = async () => {
     setLoadingList(true);
     try {
-      const res = await listAllCurricula();
-      setCurriculaList(res.curricula || []);
-      if (res.curricula && res.curricula.length > 0 && !selectedPkgId) {
-        loadPackage(res.curricula[0].package_id);
+      const [currRes, studRes] = await Promise.all([
+        listAllCurricula().catch(() => ({ curricula: [] })),
+        listStudentProfiles().catch(() => ({ profiles: [] })),
+      ]);
+      setCurriculaList(currRes.curricula || []);
+      setStudents(studRes.profiles || []);
+      if (currRes.curricula && currRes.curricula.length > 0 && !selectedPkgId) {
+        loadPackage(currRes.curricula[0].package_id);
       }
     } catch (err) {
       console.warn('Failed to load list:', err);
@@ -80,6 +87,7 @@ export default function CurriculumStudioPage() {
         target_age_group: ageGroup,
         enable_audio: enableAudio,
         enable_simplification: enableSimplification,
+        target_student_id: targetStudentId || undefined,
       });
       setActivePackage(res.curriculum);
       setSelectedPkgId(res.package_id);
@@ -109,6 +117,8 @@ export default function CurriculumStudioPage() {
 
   const resolvedQuestions = activePackage?.assessment?.questions || [];
 
+  const selectedStudentObj = students.find((s) => s.student_id === targetStudentId);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Top Bar */}
@@ -117,7 +127,7 @@ export default function CurriculumStudioPage() {
           <span className="tag-ink mb-1">Teacher Workspace</span>
           <h1 className="text-3xl font-bold text-[#1a1714] font-serif tracking-tight mt-1">Curriculum Studio</h1>
           <p className="text-xs text-[#8a8075]">
-            Browse saved lesson modules or create a new multi-modal curriculum.
+            Browse saved lesson modules or synthesize a personalized multi-modal curriculum.
           </p>
         </div>
 
@@ -135,7 +145,7 @@ export default function CurriculumStudioPage() {
 
       {/* Main Grid: Left Library Sidebar | Right Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Saved Library without red shadow */}
+        {/* Left Column: Saved Library */}
         <div className="lg:col-span-4 border border-[#1a1714] bg-[#e9e2d5] p-4 space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]">
             <h3 className="text-xs font-bold text-[#1a1714] uppercase tracking-wider flex items-center gap-1.5 font-mono">
@@ -197,18 +207,19 @@ export default function CurriculumStudioPage() {
             <div className="border border-[#1a1714] bg-[#ebd9be] p-6 space-y-5">
               <div className="pb-3 border-b border-[#1a1714]">
                 <h2 className="text-lg font-bold text-[#1a1714] font-serif flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#c84b2f]" /> Create Lesson Package
+                  <Sparkles className="h-4 w-4 text-[#c84b2f]" /> Create Personalized Lesson Package
                 </h2>
                 <p className="text-xs text-[#1a1714]/80">
-                  Runs the multi-agent curriculum authoring workflow on Google Cloud Run.
+                  Synthesizes structured lesson prose, diagrams, quizzes, and accommodations tailored to student needs on Google Cloud Run.
                 </p>
               </div>
 
               <form onSubmit={handleGenerate} className="space-y-4">
+                {/* Topic */}
                 <div>
                   <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono">TOPIC & SYLLABUS NOTES</label>
                   <textarea
-                    rows={4}
+                    rows={3}
                     required
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
@@ -217,19 +228,60 @@ export default function CurriculumStudioPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono">TARGET GRADE LEVEL</label>
-                  <select
-                    value={ageGroup}
-                    onChange={(e) => setAgeGroup(e.target.value)}
-                    className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
-                  >
-                    <option value="Grade 5-6 (10-12yo)">Grade 5-6 (10-12yo) &bull; Elementary Foundation</option>
-                    <option value="Grade 7-8 (12-14yo)">Grade 7-8 (12-14yo) &bull; Middle School Core</option>
-                    <option value="Grade 9-10 (14-16yo)">Grade 9-10 (14-16yo) &bull; High School Introductory</option>
-                    <option value="Grade 11-12 (16-18yo)">Grade 11-12 (16-18yo) &bull; Advanced Placement / IB</option>
-                  </select>
+                {/* Target Student & Grade Level */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> TAILOR FOR SPECIFIC STUDENT
+                    </label>
+                    <select
+                      value={targetStudentId}
+                      onChange={(e) => setTargetStudentId(e.target.value)}
+                      className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                    >
+                      <option value="">General Class (No specific profile)</option>
+                      {students.map((st) => (
+                        <option key={st.student_id} value={st.student_id}>
+                          {st.display_name || st.student_id} ({st.student_id}) &bull; {st.reading_level || 'Grade 7-8'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono">TARGET GRADE LEVEL</label>
+                    <select
+                      value={ageGroup}
+                      onChange={(e) => setAgeGroup(e.target.value)}
+                      className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                    >
+                      <option value="Grade 5-6 (10-12yo)">Grade 5-6 (10-12yo) &bull; Elementary Foundation</option>
+                      <option value="Grade 7-8 (12-14yo)">Grade 7-8 (12-14yo) &bull; Middle School Core</option>
+                      <option value="Grade 9-10 (14-16yo)">Grade 9-10 (14-16yo) &bull; High School Introductory</option>
+                      <option value="Grade 11-12 (16-18yo)">Grade 11-12 (16-18yo) &bull; Advanced Placement / IB</option>
+                    </select>
+                  </div>
                 </div>
+
+                {/* Selected Student Accommodations Preview */}
+                {selectedStudentObj && (
+                  <div className="p-3.5 bg-[#f5f0e8] border border-[#1a1714] space-y-1.5 text-xs text-[#1a1714]">
+                    <div className="flex items-center justify-between">
+                      <strong className="font-serif text-sm">Personalizing for: {selectedStudentObj.display_name}</strong>
+                      <span className="tag-ink">Reading: {selectedStudentObj.reading_level}</span>
+                    </div>
+                    {selectedStudentObj.reading_difficulty_flags && selectedStudentObj.reading_difficulty_flags.length > 0 && (
+                      <div className="text-[11px] text-[#c84b2f]">
+                        <strong>Accommodations:</strong> {selectedStudentObj.reading_difficulty_flags.join(', ')}
+                      </div>
+                    )}
+                    {selectedStudentObj.teacher_notes && (
+                      <div className="text-[11px] text-[#8a8075] italic">
+                        <strong>Teacher Directives:</strong> &ldquo;{selectedStudentObj.teacher_notes}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <label className="flex items-center gap-2 text-xs text-[#1a1714] cursor-pointer p-2.5 border border-[#1a1714] bg-[#f5f0e8]">
@@ -254,7 +306,7 @@ export default function CurriculumStudioPage() {
 
                 <div className="flex gap-3 pt-2">
                   <button type="submit" disabled={generating} className="btn-ink flex-1">
-                    {generating ? 'Generating on Cloud Run...' : 'Generate Full Curriculum'}
+                    {generating ? 'Synthesizing Tailored Curriculum...' : 'Generate Personalized Curriculum'}
                   </button>
                   <button
                     type="button"
@@ -272,7 +324,7 @@ export default function CurriculumStudioPage() {
               {generating && (
                 <div className="p-3.5 border border-[#1a1714] bg-[#f5f0e8] flex items-center gap-2 text-xs text-[#1a1714]">
                   <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#c84b2f]" />
-                  <span>Pipeline executing on Google Cloud Run...</span>
+                  <span>Curriculum synthesis agent adapting content to student profile on Cloud Run...</span>
                 </div>
               )}
             </div>
@@ -348,7 +400,7 @@ export default function CurriculumStudioPage() {
                 )}
               </div>
 
-              {/* Tab 1: Lesson Content with Unified Typography */}
+              {/* Tab 1: Lesson Content */}
               {activeTab === 'text' && (
                 <div className="space-y-6 text-[#1a1714] leading-relaxed">
                   {activePackage.framework?.pedagogical_hook && (
