@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import mermaid from 'mermaid';
 import { DiagramItem } from '@/types';
-import { Copy, Check, Code, Image as ImageIcon } from 'lucide-react';
+import { Copy, Check, Code } from 'lucide-react';
 
 interface MermaidViewerProps {
   chart?: string;
@@ -12,31 +12,31 @@ interface MermaidViewerProps {
 }
 
 export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewerProps) {
-  // Collect all available diagrams
-  const allDiagrams: { id: string; title?: string; caption?: string; code: string }[] = [];
-
-  if (diagrams && diagrams.length > 0) {
-    diagrams.forEach((d, idx) => {
-      const code = d.mermaid_code || d.mermaid_syntax || d.syntax || '';
-      if (code) {
-        allDiagrams.push({
-          id: d.diagram_id || `diag_${idx}`,
-          title: d.title || `Diagram ${idx + 1}`,
-          caption: d.caption,
-          code: code,
-        });
-      }
-    });
-  }
-
-  if (chart && allDiagrams.length === 0) {
-    allDiagrams.push({
-      id: 'single_diagram',
-      title: 'Architectural Model',
-      caption: caption,
-      code: chart,
-    });
-  }
+  const allDiagrams = useMemo(() => {
+    const list: { id: string; title?: string; caption?: string; code: string }[] = [];
+    if (diagrams && diagrams.length > 0) {
+      diagrams.forEach((d, idx) => {
+        const code = d.mermaid_code || d.mermaid_syntax || d.syntax || '';
+        if (code) {
+          list.push({
+            id: d.diagram_id || `diag_${idx}`,
+            title: d.title || `Diagram ${idx + 1}`,
+            caption: d.caption,
+            code: code,
+          });
+        }
+      });
+    }
+    if (chart && list.length === 0) {
+      list.push({
+        id: 'single_diagram',
+        title: 'Architectural Model',
+        caption: caption,
+        code: chart,
+      });
+    }
+    return list;
+  }, [chart, caption, diagrams]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [svgOutput, setSvgOutput] = useState<string>('');
@@ -44,7 +44,7 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const activeDiagram = allDiagrams[activeIndex] || allDiagrams[0];
+  const activeCode = allDiagrams[activeIndex]?.code || '';
 
   useEffect(() => {
     mermaid.initialize({
@@ -52,71 +52,80 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
       theme: 'dark',
       themeVariables: {
         darkMode: true,
-        background: '#0e111a',
-        primaryColor: '#4f46e5',
-        primaryTextColor: '#f8fafc',
-        primaryBorderColor: '#6366f1',
-        lineColor: '#38bdf8',
-        secondaryColor: '#10b981',
-        tertiaryColor: '#f59e0b',
-        fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+        background: '#121215',
+        primaryColor: '#ffffff',
+        primaryTextColor: '#fafafa',
+        primaryBorderColor: '#3f3f46',
+        lineColor: '#a1a1aa',
+        secondaryColor: '#27272a',
+        tertiaryColor: '#18181b',
+        fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif',
       },
       securityLevel: 'loose',
     });
 
+    let isMounted = true;
+
     const renderCurrent = async () => {
-      if (!activeDiagram || !activeDiagram.code) {
-        setSvgOutput('');
+      if (!activeCode) {
+        if (isMounted) setSvgOutput('');
         return;
       }
 
-      setErrorMsg(null);
-      let raw = activeDiagram.code.trim();
-      // Remove markdown code fences if present
+      let raw = activeCode.trim();
       raw = raw.replace(/^```(mermaid)?\s*/i, '').replace(/```$/i, '').trim();
 
-      const renderId = `mermaid_render_${Math.random().toString(36).substring(2, 9)}`;
+      const renderId = `mermaid_svg_${Math.random().toString(36).substring(2, 9)}`;
       try {
         const { svg } = await mermaid.render(renderId, raw);
-        setSvgOutput(svg);
+        if (isMounted) {
+          setSvgOutput(svg);
+          setErrorMsg(null);
+        }
       } catch (err: any) {
-        console.warn('Mermaid render error:', err);
-        setErrorMsg('Could not render SVG visually. Showing clean syntax fallback.');
+        console.warn('Mermaid render warning:', err);
+        if (isMounted) {
+          setErrorMsg('Visual rendering fallback enabled');
+        }
       }
     };
 
     renderCurrent();
-  }, [activeDiagram]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCode]);
 
   if (allDiagrams.length === 0) {
     return (
-      <div className="panel p-8 text-center text-xs text-slate-500">
-        No visual diagram blueprints generated for this lesson.
+      <div className="ui-panel p-8 text-center text-xs text-[#71717a]">
+        No visual diagram blueprints generated for this module.
       </div>
     );
   }
 
+  const activeDiagram = allDiagrams[activeIndex] || allDiagrams[0];
+
   const handleCopy = () => {
-    if (activeDiagram?.code) {
-      navigator.clipboard.writeText(activeDiagram.code);
+    if (activeCode) {
+      navigator.clipboard.writeText(activeCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   return (
-    <div className="panel overflow-hidden">
-      {/* Diagram Selector & Actions Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
-        <div className="flex items-center gap-2 overflow-x-auto">
+    <div className="ui-panel overflow-hidden">
+      {/* Selector & Actions */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#27272a] bg-[#121215]">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
           {allDiagrams.map((d, i) => (
             <button
               key={d.id}
               onClick={() => setActiveIndex(i)}
-              className={`px-3 py-1 text-xs rounded-md transition-colors whitespace-nowrap font-medium ${
-                activeIndex === i
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              className={`px-2.5 py-1 text-xs rounded transition-colors whitespace-nowrap ${
+                activeIndex === i ? 'bg-white text-black font-semibold' : 'text-[#a1a1aa] hover:text-white'
               }`}
             >
               {d.title}
@@ -127,14 +136,14 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowRawCode(!showRawCode)}
-            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-1 text-[11px] text-[#a1a1aa] hover:text-white px-2 py-1 rounded bg-[#18181b] border border-[#27272a]"
           >
             <Code className="h-3 w-3" />
-            <span>{showRawCode ? 'Visual View' : 'Syntax'}</span>
+            <span>{showRawCode ? 'Visual' : 'Code'}</span>
           </button>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-1 text-[11px] text-[#a1a1aa] hover:text-white px-2 py-1 rounded bg-[#18181b] border border-[#27272a]"
           >
             {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -142,13 +151,13 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
         </div>
       </div>
 
-      {/* Render Stage */}
-      <div className="p-6 bg-[#080a0f] flex flex-col items-center justify-center min-h-[260px] overflow-x-auto">
+      {/* Stage */}
+      <div className="p-6 bg-[#09090b] flex flex-col items-center justify-center min-h-[260px] overflow-x-auto">
         {showRawCode || errorMsg ? (
           <div className="w-full">
-            {errorMsg && <p className="text-xs text-amber-400 mb-2">{errorMsg}</p>}
-            <pre className="p-4 rounded-md bg-slate-900/90 border border-slate-800 text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed">
-              {activeDiagram?.code}
+            {errorMsg && <p className="text-xs text-amber-400 mb-2 font-mono">{errorMsg}</p>}
+            <pre className="p-4 rounded bg-[#121215] border border-[#27272a] text-xs font-mono text-[#fafafa] overflow-x-auto leading-relaxed">
+              {activeCode}
             </pre>
           </div>
         ) : svgOutput ? (
@@ -157,14 +166,14 @@ export default function MermaidViewer({ chart, caption, diagrams }: MermaidViewe
             dangerouslySetInnerHTML={{ __html: svgOutput }}
           />
         ) : (
-          <div className="text-xs text-slate-500">Synthesizing diagram layout...</div>
+          <div className="text-xs text-[#71717a]">Rendering diagram layout...</div>
         )}
       </div>
 
       {/* Caption */}
       {activeDiagram?.caption && (
-        <div className="px-4 py-2.5 bg-slate-900/60 border-t border-slate-800 text-xs text-slate-400">
-          <strong className="text-slate-300">Description:</strong> {activeDiagram.caption}
+        <div className="px-3.5 py-2 bg-[#121215] border-t border-[#27272a] text-xs text-[#a1a1aa]">
+          <strong className="text-white">Model Description:</strong> {activeDiagram.caption}
         </div>
       )}
     </div>

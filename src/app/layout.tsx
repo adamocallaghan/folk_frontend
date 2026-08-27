@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import Header from "@/components/Header";
+import type { Metadata } from 'next';
+import './globals.css';
+import Header from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: "Folk Education Hub — ADK Multi-Agent Platform",
-  description:
-    "Next-generation autonomous multi-agent educational ecosystem powered by Google ADK and Gemini 3.7 Flash.",
+  title: 'Folk OS - Multi-Agent Pedagogical Platform',
+  description: 'Autonomous multi-agent educational operating system powered by Google ADK and Gemini 3.7',
 };
 
 export default function RootLayout({
@@ -15,14 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="antialiased min-h-screen flex flex-col bg-[#07090e] text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <body className="bg-[#09090b] text-[#fafafa] min-h-screen antialiased">
         <Header />
-        <main className="flex-1 w-full">{children}</main>
-        <footer className="w-full border-t border-white/5 py-6 px-4 text-center text-xs text-slate-500">
-          <p>
-            Folk Multi-Agent Education System &bull; Powered by Google Agent Development Kit (ADK) &bull; Cloud Run in us-east1
-          </p>
-        </footer>
+        <main className="min-h-[calc(100vh-3.25rem)]">{children}</main>
       </body>
     </html>
   );
