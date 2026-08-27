@@ -5,6 +5,7 @@ import { ShieldCheck, MessageSquare, Send, CheckCircle2, XCircle, RefreshCw } fr
 import { getStudentProfile, sendTeacherDiscovery, approveRemediation } from '@/lib/api';
 import { LongitudinalProfile, RemediationPlan, ChatMessage } from '@/types';
 import CognitiveRadar from '@/components/CognitiveRadar';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export default function TeacherGovernancePage() {
   const [studentId, setStudentId] = useState('student_demo_101');
@@ -186,7 +187,7 @@ export default function TeacherGovernancePage() {
           )}
         </div>
 
-        {/* Right: Athena Dialogue */}
+        {/* Right: Athena Dialogue with Markdown Rendering */}
         <div className="lg:col-span-6 flex flex-col h-[680px] border border-[#1a1714] bg-[#ffffff] overflow-hidden">
           <div className="p-3.5 border-b border-[#1a1714] bg-[#e8e0d0] flex items-center justify-between">
             <div>
@@ -208,13 +209,17 @@ export default function TeacherGovernancePage() {
               messages.map((m) => (
                 <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div
-                    className={`max-w-[85%] p-3 text-xs leading-relaxed border border-[#1a1714] ${
+                    className={`max-w-[90%] p-3.5 text-xs leading-relaxed border border-[#1a1714] ${
                       m.role === 'user'
                         ? 'bg-[#1a1714] text-[#f5f0e8]'
-                        : 'bg-[#ffffff] text-[#1a1714] whitespace-pre-wrap shadow-[2px_2px_0px_0px_#1a1714]'
+                        : 'bg-[#ffffff] text-[#1a1714] shadow-[3px_3px_0px_0px_#1a1714]'
                     }`}
                   >
-                    {m.content}
+                    {m.role === 'assistant' ? (
+                      <MarkdownRenderer content={m.content} />
+                    ) : (
+                      <p className="whitespace-pre-wrap">{m.content}</p>
+                    )}
                   </div>
                   <span className="text-[10px] text-[#8a8075] mt-0.5 px-1 font-mono">{m.timestamp}</span>
                 </div>

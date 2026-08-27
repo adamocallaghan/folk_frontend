@@ -7,6 +7,7 @@ import { getCurriculumPackage, sendStudentChat, evaluateSession } from '@/lib/ap
 import { LessonPackage, ChatMessage, LessonSectionItem } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw } from 'lucide-react';
 
 export default function StudentLessonPage() {
@@ -179,7 +180,7 @@ export default function StudentLessonPage() {
                 return (
                   <div key={idx} className="p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-2.5">
                     <h3 className="text-base font-bold text-[#1a1714] font-serif">{secTitle}</h3>
-                    <div className="text-xs text-[#1a1714] leading-relaxed whitespace-pre-wrap">{secBody}</div>
+                    <MarkdownRenderer content={secBody} />
                     {checkpoint && (
                       <div className="p-3 bg-[#cbd7c7] border border-[#1a1714] text-xs text-[#1a1714]">
                         <strong className="block mb-0.5 font-mono">Check for Understanding:</strong> {checkpoint}
@@ -239,7 +240,7 @@ export default function StudentLessonPage() {
           </div>
         </div>
 
-        {/* Right Column: Aura Tutor Chat */}
+        {/* Right Column: Aura Tutor Chat with Markdown Rendering */}
         <div className="lg:col-span-5 flex flex-col h-[680px] border border-[#1a1714] bg-[#ffffff] overflow-hidden sticky top-6">
           <div className="p-3.5 border-b border-[#1a1714] bg-[#e8e0d0] flex items-center justify-between">
             <div>
@@ -255,13 +256,17 @@ export default function StudentLessonPage() {
                 className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 text-xs leading-relaxed border border-[#1a1714] ${
+                  className={`max-w-[90%] p-3.5 text-xs leading-relaxed border border-[#1a1714] ${
                     m.role === 'user'
                       ? 'bg-[#1a1714] text-[#f5f0e8]'
-                      : 'bg-[#ffffff] text-[#1a1714] whitespace-pre-wrap shadow-[2px_2px_0px_0px_#1a1714]'
+                      : 'bg-[#ffffff] text-[#1a1714] shadow-[3px_3px_0px_0px_#1a1714]'
                   }`}
                 >
-                  {m.content}
+                  {m.role === 'assistant' ? (
+                    <MarkdownRenderer content={m.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                  )}
                 </div>
                 <span className="text-[10px] text-[#8a8075] mt-0.5 px-1 font-mono">{m.timestamp}</span>
               </div>

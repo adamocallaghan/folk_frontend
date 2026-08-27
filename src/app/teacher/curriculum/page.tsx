@@ -13,6 +13,7 @@ import { generateCurriculum, listAllCurricula, getCurriculumPackage, CurriculumS
 import { LessonPackage, LessonSectionItem, AudioSegmentItem } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export default function CurriculumStudioPage() {
   const [curriculaList, setCurriculaList] = useState<CurriculumSummary[]>([]);
@@ -364,7 +365,7 @@ export default function CurriculumStudioPage() {
                     </div>
                   )}
 
-                  {/* All Core Sections */}
+                  {/* All Core Sections with Markdown Rendering */}
                   {resolvedSections.map((sec, idx) => {
                     const secTitle = sec.title || sec.section_title || sec.heading || `Section ${idx + 1}`;
                     const secBody = sec.body_markdown || sec.body_text || sec.content || '';
@@ -379,7 +380,7 @@ export default function CurriculumStudioPage() {
                           )}
                         </div>
 
-                        <div className="text-[#1a1714] leading-relaxed whitespace-pre-wrap">{secBody}</div>
+                        <MarkdownRenderer content={secBody} />
 
                         {sec.key_concepts && sec.key_concepts.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 pt-2">
