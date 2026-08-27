@@ -1,83 +1,93 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { QuizQuestion } from "@/types";
-import { CheckCircle2, HelpCircle, AlertCircle, Lightbulb, ChevronDown } from "lucide-react";
+import React, { useState } from 'react';
+import { QuizQuestionItem } from '@/types';
+import { CheckCircle2, AlertCircle, HelpCircle, ChevronDown } from 'lucide-react';
 
 interface QuizCardProps {
-  question: QuizQuestion;
+  question: QuizQuestionItem;
   index: number;
   onAnswerSubmit?: (questionId: string, answer: string, isCorrect: boolean) => void;
 }
 
 export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [customAnswer, setCustomAnswer] = useState("");
+  const [customInput, setCustomInput] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showHint, setShowHint] = useState(false);
 
-  const handleSubmit = (answerToTest?: string) => {
-    const finalAnswer = answerToTest || selectedOption || customAnswer;
-    if (!finalAnswer) return;
+  const promptText =
+    question.prompt || question.question_text || question.question || question.text || `Question ${index + 1}`;
+  const hintText = question.hint || question.socratic_hint;
+  const qId = question.question_id || question.id || `q_${index + 1}`;
+
+  const handleSubmit = (answerProvided?: string) => {
+    const ans = answerProvided || selectedOption || customInput;
+    if (!ans) return;
 
     setSubmitted(true);
-    // Flexible match against correct answer
+    const correctAns = question.correct_answer || '';
     const correct =
-      finalAnswer.trim().toLowerCase() === question.correct_answer.trim().toLowerCase() ||
-      question.correct_answer.toLowerCase().includes(finalAnswer.toLowerCase());
+      correctAns.trim().toLowerCase() === ans.trim().toLowerCase() ||
+      correctAns.toLowerCase().includes(ans.toLowerCase()) ||
+      ans.toLowerCase().includes(correctAns.toLowerCase());
 
     setIsCorrect(correct);
-    if (!correct) {
-      setShowHint(true); // Automatically reveal Socratic hint if wrong
+    if (!correct && hintText) {
+      setShowHint(true);
     }
     if (onAnswerSubmit) {
-      onAnswerSubmit(question.question_id, finalAnswer, correct);
+      onAnswerSubmit(qId, ans, correct);
     }
   };
 
   return (
-    <div className="glass-panel p-5 my-4 border border-white/10 transition-all">
-      <div className="flex items-start justify-between gap-3 mb-3">
+    <div className="panel p-5 space-y-4">
+      {/* Question Header & ID */}
+      <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/20 text-xs font-bold text-indigo-300 border border-indigo-500/30">
+          <span className="flex h-5 w-5 items-center justify-center rounded bg-indigo-600/20 text-indigo-400 font-mono text-[10px] font-bold">
             Q{index + 1}
           </span>
-          <span className="text-xs text-slate-400 font-mono">
-            {question.question_id}
-          </span>
+          <span className="text-[11px] font-mono text-slate-500">{qId}</span>
         </div>
 
         {submitted && (
           <span
-            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+            className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded ${
               isCorrect
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
             }`}
           >
             {isCorrect ? (
               <>
-                <CheckCircle2 className="h-3.5 w-3.5" /> Correct!
+                <CheckCircle2 className="h-3 w-3" /> Correct
               </>
             ) : (
               <>
-                <AlertCircle className="h-3.5 w-3.5" /> Let's rethink
+                <AlertCircle className="h-3 w-3" /> Needs Review
               </>
             )}
           </span>
         )}
       </div>
 
-      <p className="text-sm font-medium text-slate-100 mb-4 leading-relaxed">
-        {question.question_text}
-      </p>
+      {/* The Actual Question Prompt */}
+      <p className="text-sm font-medium text-slate-100 leading-relaxed">{promptText}</p>
 
-      {/* Multiple Choice Options (if available) */}
+      {/* Options List */}
       {question.options && question.options.length > 0 ? (
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2">
           {question.options.map((opt, i) => {
             const isSelected = selectedOption === opt;
+            let btnClass = 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/80';
+            if (isSelected) {
+              btnClass = isCorrect
+                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                : 'bg-amber-950/40 border-amber-500/40 text-amber-200';
+            }
             return (
               <button
                 key={i}
@@ -86,62 +96,51 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
                   setSelectedOption(opt);
                   handleSubmit(opt);
                 }}
-                className={`w-full text-left px-4 py-2.5 rounded-lg text-xs transition-all border ${
-                  isSelected
-                    ? isCorrect
-                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-200"
-                      : "bg-amber-500/15 border-amber-500/40 text-amber-200"
-                    : "bg-white/[0.03] border-white/5 text-slate-300 hover:bg-white/[0.06] hover:border-white/10"
-                }`}
+                className={`w-full text-left px-3.5 py-2.5 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${btnClass}`}
               >
-                <span className="font-semibold text-slate-400 mr-2">
-                  {String.fromCharCode(65 + i)}.
-                </span>
-                {opt}
+                <span className="font-mono font-semibold text-slate-500">{String.fromCharCode(65 + i)}.</span>
+                <span className="leading-relaxed">{opt}</span>
               </button>
             );
           })}
         </div>
       ) : (
-        /* Free form answer input */
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2">
           <input
             type="text"
             disabled={submitted}
-            placeholder="Type your explanation or response..."
-            value={customAnswer}
-            onChange={(e) => setCustomAnswer(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="flex-1 rounded-lg bg-black/40 border border-white/10 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            placeholder="Type your explanation..."
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            className="flex-1 rounded-lg bg-slate-900 border border-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
           <button
             onClick={() => handleSubmit()}
-            disabled={submitted || !customAnswer.trim()}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+            disabled={submitted || !customInput.trim()}
+            className="btn-primary px-3.5 py-2 text-xs"
           >
-            Check
+            Submit
           </button>
         </div>
       )}
 
-      {/* Socratic Hint Drawer */}
-      {question.socratic_hint && (
-        <div className="mt-3 pt-3 border-t border-white/5">
+      {/* Socratic Hint */}
+      {hintText && (
+        <div className="pt-2 border-t border-slate-800">
           <button
             onClick={() => setShowHint(!showHint)}
-            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-medium"
           >
-            <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
-            <span>{showHint ? "Hide Socratic Guide" : "Need a hint?"}</span>
-            <ChevronDown className={`h-3 w-3 transition-transform ${showHint ? "rotate-180" : ""}`} />
+            <HelpCircle className="h-3 w-3" />
+            <span>{showHint ? 'Hide Socratic Guidance' : 'Need a hint?'}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${showHint ? 'rotate-180' : ''}`} />
           </button>
 
           {showHint && (
-            <div className="mt-2 p-3 rounded-lg bg-indigo-950/40 border border-indigo-500/20 text-xs text-indigo-200 leading-relaxed animate-in fade-in">
-              <span className="font-semibold text-indigo-300 block mb-1">
-                💭 Socratic Thought Prompt:
-              </span>
-              {question.socratic_hint}
+            <div className="mt-2 p-3 rounded bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-200 leading-relaxed">
+              <strong className="block text-indigo-300 mb-0.5">Socratic Prompt:</strong>
+              {hintText}
             </div>
           )}
         </div>
