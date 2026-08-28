@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Plus, Save, RefreshCw, CheckCircle2, AlertTriangle, BookOpen } from 'lucide-react';
+import { Users, Plus, Save, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { listStudentProfiles, upsertStudentProfile } from '@/lib/api';
 import { LongitudinalProfile } from '@/types';
 import CognitiveRadar from '@/components/CognitiveRadar';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function TeacherStudentsPage() {
+  const { theme } = useTheme();
+  const isRefined = theme === 'refined';
+
   const [students, setStudents] = useState<LongitudinalProfile[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -135,34 +139,43 @@ export default function TeacherStudentsPage() {
   const selectedProfile = students.find((s) => s.student_id === selectedStudentId);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1714]">
+      <div className={`flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 ${isRefined ? 'border-b border-[#1a1714]/15' : 'border-b border-[#1a1714]'}`}>
         <div>
-          <span className="tag-ink mb-1">Teacher Workspace</span>
-          <h1 className="text-3xl font-bold text-[#1a1714] font-serif tracking-tight mt-1">Student Profiles & Accommodations</h1>
-          <p className="text-xs text-[#8a8075]">
-            Configure reading difficulty flags, learning modalities, and pedagogical accommodations. Lessons generated in Curriculum Studio will tailor content directly to these profiles.
+          {!isRefined && <span className="tag-ink mb-1">Teacher Workspace</span>}
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#1a1714] font-serif tracking-tight">
+            Student Profiles & Accommodations
+          </h1>
+          <p className="text-xs sm:text-sm text-[#8a8075] mt-1">
+            Configure reading difficulty flags, learning modalities, and teacher accommodations.
           </p>
         </div>
 
-        <button onClick={startNewStudent} className="btn-ink flex items-center gap-1.5">
+        <button
+          onClick={startNewStudent}
+          className={`flex items-center gap-1.5 transition-all ${
+            isRefined
+              ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] text-xs font-semibold px-4 py-2'
+              : 'btn-ink'
+          }`}
+        >
           <Plus className="h-3.5 w-3.5" />
-          <span>Add New Student</span>
+          <span>Add Student</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Student Roster */}
-        <div className="lg:col-span-4 border border-[#1a1714] bg-[#e9e2d5] p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]">
-            <h3 className="text-xs font-bold text-[#1a1714] uppercase tracking-wider flex items-center gap-1.5 font-mono">
-              <Users className="h-3.5 w-3.5 text-[#1a1714]" />
+        <div className={`lg:col-span-4 space-y-3 ${isRefined ? 'border-r border-[#1a1714]/15 pr-6' : 'border border-[#1a1714] bg-[#e9e2d5] p-4'}`}>
+          <div className="flex items-center justify-between pb-2">
+            <h3 className={`text-xs font-bold text-[#1a1714] flex items-center gap-1.5 ${isRefined ? 'font-sans uppercase tracking-wider text-[#8a8075]' : 'uppercase tracking-wider font-mono'}`}>
+              <Users className="h-3.5 w-3.5" />
               Class Roster ({students.length})
             </h3>
             <button
               onClick={loadProfiles}
-              className="text-[#1a1714] p-1 border border-[#1a1714] bg-[#f5f0e8] hover:bg-[#ebd9be]"
+              className="text-[#1a1714] p-1 hover:text-[#c84b2f] transition-colors"
               title="Refresh roster"
             >
               <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
@@ -172,11 +185,40 @@ export default function TeacherStudentsPage() {
           {loading ? (
             <div className="py-8 text-center text-xs text-[#8a8075]">Loading student profiles...</div>
           ) : students.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#8a8075]">No students registered yet. Click &quot;Add New Student&quot; to create one.</div>
+            <div className="py-8 text-center text-xs text-[#8a8075]">No students registered yet. Click &quot;Add Student&quot; to create one.</div>
           ) : (
-            <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+            <div className="space-y-1 max-h-[640px] overflow-y-auto pr-1">
               {students.map((st) => {
                 const isSelected = selectedStudentId === st.student_id;
+
+                if (isRefined) {
+                  return (
+                    <button
+                      key={st.student_id}
+                      onClick={() => populateForm(st)}
+                      className={`w-full text-left p-3 transition-all flex flex-col gap-1 border-b border-[#1a1714]/10 last:border-b-0 ${
+                        isSelected
+                          ? 'bg-[#1a1714] text-[#f5f0e8]'
+                          : 'hover:bg-[#1a1714]/5 text-[#1a1714]'
+                      }`}
+                    >
+                      <div className="flex items-baseline justify-between w-full">
+                        <h4 className="font-bold font-serif text-sm">{st.display_name || st.student_id}</h4>
+                        <span className={`text-xs ${isSelected ? 'text-[#e8e0d0]' : 'text-[#8a8075]'}`}>
+                          {st.grade_level || 'Grade 7-8'}
+                        </span>
+                      </div>
+
+                      <div className={`flex flex-wrap items-center gap-1.5 text-xs ${isSelected ? 'text-[#e8e0d0]/80' : 'text-[#8a8075]'}`}>
+                        <span>{st.reading_level || 'Grade 7-8'}</span>
+                        {st.reading_difficulty_flags && st.reading_difficulty_flags.length > 0 && (
+                          <span className="text-[#c84b2f]">&bull; {st.reading_difficulty_flags.length} accommodations</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                }
+
                 return (
                   <button
                     key={st.student_id}
@@ -209,64 +251,67 @@ export default function TeacherStudentsPage() {
 
         {/* Right Column: Profile Editor & Cognitive Details */}
         <div className="lg:col-span-8 space-y-6">
-          <form onSubmit={handleSave} className="border border-[#1a1714] bg-[#ffffff] p-6 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1a1714]">
+          <form
+            onSubmit={handleSave}
+            className={`p-6 space-y-5 ${isRefined ? 'bg-[#ffffff] border border-[#1a1714]/15 shadow-sm' : 'border border-[#1a1714] bg-[#ffffff]'}`}
+          >
+            <div className={`flex items-center justify-between pb-3 ${isRefined ? 'border-b border-[#1a1714]/10' : 'border-b border-[#1a1714]'}`}>
               <div>
-                <h2 className="text-lg font-bold text-[#1a1714] font-serif">
-                  {selectedStudentId ? `Edit Student: ${displayName || studentId}` : 'Register New Student'}
+                <h2 className="text-xl font-bold text-[#1a1714] font-serif">
+                  {selectedStudentId ? `Edit Student: ${displayName || studentId}` : 'Register Student'}
                 </h2>
-                <p className="text-xs text-[#8a8075]">
-                  Persists to Firebase Firestore `student_profiles/{studentId}`
+                <p className="text-xs text-[#8a8075] mt-0.5">
+                  Stored under `student_profiles/{studentId}`
                 </p>
               </div>
 
               {savedSuccess && (
-                <span className="tag-ink bg-[#cbd7c7] border-[#1a1714] text-[#1a1714]">
-                  <CheckCircle2 className="h-3 w-3" /> Saved to Firestore
+                <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Saved
                 </span>
               )}
             </div>
 
             {/* Basic Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="block text-xs font-bold text-[#1a1714] mb-1 font-mono">STUDENT ID (FIRESTORE KEY)</label>
+                <label className="block font-semibold text-[#1a1714] mb-1">Student Identifier</label>
                 <input
                   type="text"
                   required
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
-                  placeholder="e.g. student_sarah_102"
-                  className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] font-mono focus:outline-none"
+                  placeholder="e.g. g1_sarah_jenkins"
+                  className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1a1714] mb-1 font-mono">FULL / DISPLAY NAME</label>
+                <label className="block font-semibold text-[#1a1714] mb-1">Full / Display Name</label>
                 <input
                   type="text"
                   required
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="e.g. Sarah Jenkins"
-                  className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                  className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1a1714] mb-1 font-mono">AGE & GRADE LEVEL</label>
+                <label className="block font-semibold text-[#1a1714] mb-1">Age & Grade</label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="number"
                     value={age}
                     onChange={(e) => setAge(Number(e.target.value))}
-                    className="border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                    className="border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                     placeholder="Age"
                   />
                   <select
                     value={gradeLevel}
                     onChange={(e) => setGradeLevel(e.target.value)}
-                    className="border border-[#1a1714] bg-[#f5f0e8] px-2 py-2 text-xs text-[#1a1714] focus:outline-none"
+                    className="border border-[#1a1714]/30 bg-[#f5f0e8] px-2 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                   >
                     <option value="Grade 5-6">Grade 5-6</option>
                     <option value="Grade 7-8">Grade 7-8</option>
@@ -277,11 +322,11 @@ export default function TeacherStudentsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1a1714] mb-1 font-mono">ASSESSED READING LEVEL</label>
+                <label className="block font-semibold text-[#1a1714] mb-1">Assessed Reading Level</label>
                 <select
                   value={readingLevel}
                   onChange={(e) => setReadingLevel(e.target.value)}
-                  className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                  className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                 >
                   <option value="Grade 3-4 (Lower Lexile / Foundational)">Grade 3-4 &bull; Lower Lexile / Foundational</option>
                   <option value="Grade 5-6 (Intermediate)">Grade 5-6 &bull; Intermediate</option>
@@ -292,20 +337,38 @@ export default function TeacherStudentsPage() {
               </div>
             </div>
 
-            {/* Reading Difficulty Flags */}
-            <div className="space-y-2 pt-2 border-t border-[#1a1714]/20">
-              <label className="block text-xs font-bold text-[#1a1714] font-mono">
-                READING DIFFICULTY & ACCESSIBILITY FLAGS
+            {/* Reading Difficulty Flags (Refined chips vs classic boxes) */}
+            <div className={`space-y-2 pt-3 ${isRefined ? 'border-t border-[#1a1714]/10' : 'border-t border-[#1a1714]/20'}`}>
+              <label className="block text-xs font-semibold text-[#1a1714]">
+                Reading & Accessibility Accommodations
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-2">
                 {difficultyOptions.map((opt) => {
                   const isChecked = selectedDiffFlags.includes(opt);
+
+                  if (isRefined) {
+                    return (
+                      <button
+                        type="button"
+                        key={opt}
+                        onClick={() => toggleFlag(opt)}
+                        className={`px-3 py-1.5 text-xs transition-all ${
+                          isChecked
+                            ? 'bg-[#1a1714] text-[#f5f0e8] font-medium'
+                            : 'bg-[#f5f0e8] hover:bg-[#1a1714]/10 text-[#1a1714]'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  }
+
                   return (
                     <button
                       type="button"
                       key={opt}
                       onClick={() => toggleFlag(opt)}
-                      className={`p-2.5 text-left border text-xs transition-colors flex items-center justify-between ${
+                      className={`p-2.5 text-left border text-xs transition-colors flex items-center justify-between min-w-[220px] ${
                         isChecked
                           ? 'bg-[#ebd4cc] border-[#1a1714] font-bold text-[#1a1714]'
                           : 'bg-[#f5f0e8] border-[#1a1714]/40 text-[#1a1714] hover:border-[#1a1714]'
@@ -322,19 +385,37 @@ export default function TeacherStudentsPage() {
             </div>
 
             {/* Modalities & Affinities */}
-            <div className="space-y-2 pt-2 border-t border-[#1a1714]/20">
-              <label className="block text-xs font-bold text-[#1a1714] font-mono">
-                PREFERRED LEARNING MODALITIES & SCAFFOLDS
+            <div className={`space-y-2 pt-3 ${isRefined ? 'border-t border-[#1a1714]/10' : 'border-t border-[#1a1714]/20'}`}>
+              <label className="block text-xs font-semibold text-[#1a1714]">
+                Preferred Learning Modalities
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-2">
                 {modalityOptions.map((opt) => {
                   const isChecked = selectedModalities.includes(opt);
+
+                  if (isRefined) {
+                    return (
+                      <button
+                        type="button"
+                        key={opt}
+                        onClick={() => toggleModality(opt)}
+                        className={`px-3 py-1.5 text-xs transition-all ${
+                          isChecked
+                            ? 'bg-[#1a1714] text-[#f5f0e8] font-medium'
+                            : 'bg-[#f5f0e8] hover:bg-[#1a1714]/10 text-[#1a1714]'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  }
+
                   return (
                     <button
                       type="button"
                       key={opt}
                       onClick={() => toggleModality(opt)}
-                      className={`p-2.5 text-left border text-xs transition-colors flex items-center justify-between ${
+                      className={`p-2.5 text-left border text-xs transition-colors flex items-center justify-between min-w-[220px] ${
                         isChecked
                           ? 'bg-[#cbd7c7] border-[#1a1714] font-bold text-[#1a1714]'
                           : 'bg-[#f5f0e8] border-[#1a1714]/40 text-[#1a1714] hover:border-[#1a1714]'
@@ -350,32 +431,36 @@ export default function TeacherStudentsPage() {
               </div>
             </div>
 
-            {/* Teacher Directives & Pedagogical Notes */}
-            <div className="space-y-1.5 pt-2 border-t border-[#1a1714]/20">
-              <label className="block text-xs font-bold text-[#1a1714] font-mono">
-                TEACHER DIRECTIVES & PEDAGOGICAL NOTES
+            {/* Teacher Directives */}
+            <div className={`space-y-1.5 pt-3 ${isRefined ? 'border-t border-[#1a1714]/10' : 'border-t border-[#1a1714]/20'}`}>
+              <label className="block text-xs font-semibold text-[#1a1714]">
+                Teacher Directives & Pedagogical Notes
               </label>
               <textarea
                 rows={3}
                 value={teacherNotes}
                 onChange={(e) => setTeacherNotes(e.target.value)}
-                placeholder="e.g. Focus on concrete analogies before introducing mathematical equations; thrives with visual schematics; avoid dense walls of text."
-                className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] placeholder-[#8a8075] focus:outline-none"
+                placeholder="e.g. Focus on concrete analogies before introducing mathematical equations; thrives with visual schematics."
+                className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] placeholder-[#8a8075] focus:outline-none focus:border-[#1a1714]"
               />
             </div>
 
-            <div className="flex gap-3 pt-3">
-              <button type="submit" disabled={saving} className="btn-ink flex-1 flex items-center justify-center gap-1.5">
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className={isRefined ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] text-xs font-semibold px-6 py-2.5 flex items-center gap-1.5' : 'btn-ink flex items-center gap-1.5'}
+              >
                 <Save className="h-3.5 w-3.5" />
-                <span>{saving ? 'Saving to Firestore...' : 'Save Student Profile'}</span>
+                <span>{saving ? 'Saving...' : 'Save Profile'}</span>
               </button>
             </div>
           </form>
 
-          {/* Longitudinal Cognitive Radar if existing */}
+          {/* Longitudinal Cognitive Radar */}
           {selectedProfile && selectedProfile.mastery_map && Object.keys(selectedProfile.mastery_map).length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold text-[#1a1714] uppercase tracking-wider font-mono">Longitudinal Mastery & Growth</h3>
+              <h3 className="text-xs font-bold text-[#1a1714] font-serif">Longitudinal Mastery & Growth</h3>
               <CognitiveRadar profile={selectedProfile} />
             </div>
           )}

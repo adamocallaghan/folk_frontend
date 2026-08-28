@@ -15,8 +15,12 @@ import { LessonPackage, LessonSectionItem, AudioSegmentItem, LongitudinalProfile
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function CurriculumStudioPage() {
+  const { theme } = useTheme();
+  const isRefined = theme === 'refined';
+
   const [curriculaList, setCurriculaList] = useState<CurriculumSummary[]>([]);
   const [students, setStudents] = useState<LongitudinalProfile[]>([]);
   const [selectedPkgId, setSelectedPkgId] = useState<string | null>(null);
@@ -116,18 +120,19 @@ export default function CurriculumStudioPage() {
     '';
 
   const resolvedQuestions = activePackage?.assessment?.questions || [];
-
   const selectedStudentObj = students.find((s) => s.student_id === targetStudentId);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1714]">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      {/* Top Header */}
+      <div className={`flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 ${isRefined ? 'border-b border-[#1a1714]/15' : 'border-b border-[#1a1714]'}`}>
         <div>
-          <span className="tag-ink mb-1">Teacher Workspace</span>
-          <h1 className="text-3xl font-bold text-[#1a1714] font-serif tracking-tight mt-1">Curriculum Studio</h1>
-          <p className="text-xs text-[#8a8075]">
-            Browse saved lesson modules or synthesize a personalized multi-modal curriculum.
+          {!isRefined && <span className="tag-ink mb-1">Teacher Workspace</span>}
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#1a1714] font-serif tracking-tight">
+            Curriculum Studio
+          </h1>
+          <p className="text-xs sm:text-sm text-[#8a8075] mt-1">
+            Synthesize structured lesson content, conceptual diagrams, and quizzes tailored to students.
           </p>
         </div>
 
@@ -136,25 +141,29 @@ export default function CurriculumStudioPage() {
             setIsCreatingNew(true);
             setSelectedPkgId(null);
           }}
-          className="btn-ink flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 transition-all ${
+            isRefined
+              ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] text-xs font-semibold px-4 py-2'
+              : 'btn-ink'
+          }`}
         >
           <Plus className="h-3.5 w-3.5" />
-          <span>New Curriculum</span>
+          <span>New Lesson</span>
         </button>
       </div>
 
       {/* Main Grid: Left Library Sidebar | Right Inspector */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Saved Library */}
-        <div className="lg:col-span-4 border border-[#1a1714] bg-[#e9e2d5] p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]">
-            <h3 className="text-xs font-bold text-[#1a1714] uppercase tracking-wider flex items-center gap-1.5 font-mono">
-              <BookOpen className="h-3.5 w-3.5 text-[#1a1714]" />
-              Saved Modules ({curriculaList.length})
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Library List */}
+        <div className={`lg:col-span-4 space-y-3 ${isRefined ? 'border-r border-[#1a1714]/15 pr-6' : 'border border-[#1a1714] bg-[#e9e2d5] p-4'}`}>
+          <div className="flex items-center justify-between pb-2">
+            <h3 className={`text-xs font-bold text-[#1a1714] flex items-center gap-1.5 ${isRefined ? 'font-sans uppercase tracking-wider text-[#8a8075]' : 'uppercase tracking-wider font-mono'}`}>
+              <BookOpen className="h-3.5 w-3.5" />
+              {isRefined ? `Saved Modules (${curriculaList.length})` : `Saved Modules (${curriculaList.length})`}
             </h3>
             <button
               onClick={refreshList}
-              className="text-[#1a1714] p-1 border border-[#1a1714] bg-[#f5f0e8] hover:bg-[#ebd9be]"
+              className="text-[#1a1714] p-1 hover:text-[#c84b2f] transition-colors"
               title="Refresh list"
             >
               <RefreshCw className={`h-3 w-3 ${loadingList ? 'animate-spin' : ''}`} />
@@ -164,9 +173,37 @@ export default function CurriculumStudioPage() {
           {loadingList ? (
             <div className="py-8 text-center text-xs text-[#8a8075]">Loading modules...</div>
           ) : (
-            <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+            <div className="space-y-1 max-h-[640px] overflow-y-auto pr-1">
               {curriculaList.map((item) => {
                 const isSelected = selectedPkgId === item.package_id && !isCreatingNew;
+
+                if (isRefined) {
+                  return (
+                    <button
+                      key={item.package_id}
+                      onClick={() => loadPackage(item.package_id)}
+                      className={`w-full text-left p-3 transition-all flex flex-col gap-1 rounded-none border-b border-[#1a1714]/10 last:border-b-0 ${
+                        isSelected
+                          ? 'bg-[#1a1714] text-[#f5f0e8]'
+                          : 'hover:bg-[#1a1714]/5 text-[#1a1714]'
+                      }`}
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <h4 className="font-bold font-serif text-sm line-clamp-1 leading-snug">{item.title}</h4>
+                        <span className={`text-[11px] shrink-0 font-sans ${isSelected ? 'text-[#e8e0d0]' : 'text-[#8a8075]'}`}>
+                          {item.duration_minutes || 25} min
+                        </span>
+                      </div>
+
+                      <div className={`flex items-center gap-2 text-xs ${isSelected ? 'text-[#e8e0d0]/80' : 'text-[#8a8075]'}`}>
+                        <span>{item.target_age_group}</span>
+                        {item.has_diagram && <span>&bull; Diagram</span>}
+                        {item.question_count > 0 && <span>&bull; {item.question_count} Qs</span>}
+                      </div>
+                    </button>
+                  );
+                }
+
                 return (
                   <button
                     key={item.package_id}
@@ -204,56 +241,54 @@ export default function CurriculumStudioPage() {
         <div className="lg:col-span-8">
           {isCreatingNew ? (
             /* Creation Form */
-            <div className="border border-[#1a1714] bg-[#ebd9be] p-6 space-y-5">
-              <div className="pb-3 border-b border-[#1a1714]">
-                <h2 className="text-lg font-bold text-[#1a1714] font-serif flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#c84b2f]" /> Create Personalized Lesson Package
+            <div className={`p-6 space-y-5 ${isRefined ? 'bg-[#ffffff] border border-[#1a1714]/15 shadow-sm' : 'border border-[#1a1714] bg-[#ebd9be]'}`}>
+              <div className={`pb-3 ${isRefined ? 'border-b border-[#1a1714]/10' : 'border-b border-[#1a1714]'}`}>
+                <h2 className="text-xl font-bold text-[#1a1714] font-serif flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#c84b2f]" /> Create Lesson
                 </h2>
-                <p className="text-xs text-[#1a1714]/80">
-                  Synthesizes structured lesson prose, diagrams, quizzes, and accommodations tailored to student needs on Google Cloud Run.
+                <p className="text-xs text-[#8a8075] mt-0.5">
+                  Synthesize structured lesson text, conceptual diagrams, and quizzes tailored to students.
                 </p>
               </div>
 
               <form onSubmit={handleGenerate} className="space-y-4">
-                {/* Topic */}
                 <div>
-                  <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono">TOPIC & SYLLABUS NOTES</label>
+                  <label className="block text-xs font-semibold text-[#1a1714] mb-1.5">Lesson Topic or Syllabus Notes</label>
                   <textarea
                     rows={3}
                     required
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Enter lesson topic, raw notes, or syllabus outline..."
-                    className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] placeholder-[#8a8075] focus:outline-none"
+                    placeholder="Enter topic outline or notes..."
+                    className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] placeholder-[#8a8075] focus:outline-none focus:border-[#1a1714]"
                   />
                 </div>
 
-                {/* Target Student & Grade Level */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono flex items-center gap-1">
-                      <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> TAILOR FOR SPECIFIC STUDENT
+                    <label className="block text-xs font-semibold text-[#1a1714] mb-1.5 flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> Tailor for Specific Student
                     </label>
                     <select
                       value={targetStudentId}
                       onChange={(e) => setTargetStudentId(e.target.value)}
-                      className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                      className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                     >
-                      <option value="">General Class (No specific profile)</option>
+                      <option value="">General Audience (No specific profile)</option>
                       {students.map((st) => (
                         <option key={st.student_id} value={st.student_id}>
-                          {st.display_name || st.student_id} ({st.student_id}) &bull; {st.reading_level || 'Grade 7-8'}
+                          {st.display_name || st.student_id} &bull; {st.reading_level || 'Grade 7-8'}
                         </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#1a1714] mb-1.5 font-mono">TARGET GRADE LEVEL</label>
+                    <label className="block text-xs font-semibold text-[#1a1714] mb-1.5">Target Grade Level</label>
                     <select
                       value={ageGroup}
                       onChange={(e) => setAgeGroup(e.target.value)}
-                      className="w-full border border-[#1a1714] bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none"
+                      className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
                     >
                       <option value="Grade 5-6 (10-12yo)">Grade 5-6 (10-12yo) &bull; Elementary Foundation</option>
                       <option value="Grade 7-8 (12-14yo)">Grade 7-8 (12-14yo) &bull; Middle School Core</option>
@@ -263,37 +298,31 @@ export default function CurriculumStudioPage() {
                   </div>
                 </div>
 
-                {/* Selected Student Accommodations Preview */}
                 {selectedStudentObj && (
-                  <div className="p-3.5 bg-[#f5f0e8] border border-[#1a1714] space-y-1.5 text-xs text-[#1a1714]">
-                    <div className="flex items-center justify-between">
-                      <strong className="font-serif text-sm">Personalizing for: {selectedStudentObj.display_name}</strong>
-                      <span className="tag-ink">Reading: {selectedStudentObj.reading_level}</span>
+                  <div className="p-3 bg-[#f5f0e8] border border-[#1a1714]/20 space-y-1 text-xs text-[#1a1714]">
+                    <div className="flex items-center justify-between font-semibold">
+                      <span>Personalizing for: {selectedStudentObj.display_name}</span>
+                      <span className="text-[#8a8075]">Reading: {selectedStudentObj.reading_level}</span>
                     </div>
                     {selectedStudentObj.reading_difficulty_flags && selectedStudentObj.reading_difficulty_flags.length > 0 && (
                       <div className="text-[11px] text-[#c84b2f]">
-                        <strong>Accommodations:</strong> {selectedStudentObj.reading_difficulty_flags.join(', ')}
-                      </div>
-                    )}
-                    {selectedStudentObj.teacher_notes && (
-                      <div className="text-[11px] text-[#8a8075] italic">
-                        <strong>Teacher Directives:</strong> &ldquo;{selectedStudentObj.teacher_notes}&rdquo;
+                        Accommodations: {selectedStudentObj.reading_difficulty_flags.join(', ')}
                       </div>
                     )}
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <label className="flex items-center gap-2 text-xs text-[#1a1714] cursor-pointer p-2.5 border border-[#1a1714] bg-[#f5f0e8]">
+                  <label className="flex items-center gap-2 text-xs text-[#1a1714] cursor-pointer p-2.5 border border-[#1a1714]/20 bg-[#f5f0e8]">
                     <input
                       type="checkbox"
                       checked={enableAudio}
                       onChange={(e) => setEnableAudio(e.target.checked)}
                       className="border-[#1a1714] text-[#1a1714] h-4 w-4"
                     />
-                    <span>Generate TTS Audio SSML</span>
+                    <span>Generate Audio SSML Script</span>
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-[#1a1714] cursor-pointer p-2.5 border border-[#1a1714] bg-[#f5f0e8]">
+                  <label className="flex items-center gap-2 text-xs text-[#1a1714] cursor-pointer p-2.5 border border-[#1a1714]/20 bg-[#f5f0e8]">
                     <input
                       type="checkbox"
                       checked={enableSimplification}
@@ -305,8 +334,12 @@ export default function CurriculumStudioPage() {
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button type="submit" disabled={generating} className="btn-ink flex-1">
-                    {generating ? 'Synthesizing Tailored Curriculum...' : 'Generate Personalized Curriculum'}
+                  <button
+                    type="submit"
+                    disabled={generating}
+                    className={isRefined ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] font-semibold text-xs py-2 px-4 flex-1' : 'btn-ink flex-1'}
+                  >
+                    {generating ? 'Generating Lesson...' : 'Generate Lesson'}
                   </button>
                   <button
                     type="button"
@@ -314,7 +347,7 @@ export default function CurriculumStudioPage() {
                       setIsCreatingNew(false);
                       if (curriculaList.length > 0) loadPackage(curriculaList[0].package_id);
                     }}
-                    className="btn-paper"
+                    className={isRefined ? 'border border-[#1a1714]/30 hover:border-[#1a1714] text-xs py-2 px-3' : 'btn-paper'}
                   >
                     Cancel
                   </button>
@@ -322,97 +355,157 @@ export default function CurriculumStudioPage() {
               </form>
 
               {generating && (
-                <div className="p-3.5 border border-[#1a1714] bg-[#f5f0e8] flex items-center gap-2 text-xs text-[#1a1714]">
+                <div className="p-3.5 border border-[#1a1714]/20 bg-[#f5f0e8] flex items-center gap-2 text-xs text-[#1a1714]">
                   <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#c84b2f]" />
-                  <span>Curriculum synthesis agent adapting content to student profile on Cloud Run...</span>
+                  <span>Synthesizing multi-agent lesson assets on Cloud Run...</span>
                 </div>
               )}
             </div>
           ) : loadingPackage ? (
-            <div className="paper-card p-16 text-center text-xs text-[#8a8075]">Loading module from Firestore...</div>
+            <div className="p-16 text-center text-xs text-[#8a8075]">Loading module...</div>
           ) : activePackage ? (
             /* Full Package Inspector */
-            <div className="border border-[#1a1714] bg-[#ffffff] p-6 space-y-6">
+            <div className={`space-y-6 ${isRefined ? 'bg-[#ffffff] p-8 border border-[#1a1714]/15' : 'border border-[#1a1714] bg-[#ffffff] p-6'}`}>
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-[#1a1714]">
+              <div className={`flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 ${isRefined ? 'border-b border-[#1a1714]/15' : 'border-b border-[#1a1714]'}`}>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="tag-ink">{selectedPkgId}</span>
-                    <span className="text-xs text-[#8a8075]">
-                      Target: <strong className="text-[#1a1714]">{activePackage.framework?.target_age_group || activePackage.target_age_group || 'Grade 7-8'}</strong>
-                    </span>
+                  <div className="flex items-center gap-2 text-xs text-[#8a8075]">
+                    <span>{activePackage.framework?.target_age_group || activePackage.target_age_group || 'Grade 7-8'}</span>
+                    {!isRefined && <span className="tag-ink">{selectedPkgId}</span>}
                   </div>
-                  <h2 className="text-2xl font-bold text-[#1a1714] font-serif tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1714] font-serif tracking-tight leading-snug">
                     {activePackage.primary_text?.lesson_title || activePackage.framework?.topic || activePackage.topic}
                   </h2>
                 </div>
 
-                <span className="tag-ink bg-[#cbd7c7] border-[#1a1714] text-[#1a1714]">
-                  <CheckCircle2 className="h-3 w-3" /> Synced
-                </span>
+                {!isRefined && (
+                  <span className="tag-ink bg-[#cbd7c7] border-[#1a1714] text-[#1a1714]">
+                    <CheckCircle2 className="h-3 w-3" /> Synced
+                  </span>
+                )}
               </div>
 
               {/* Tabs */}
-              <div className="flex flex-wrap gap-1 p-1 border border-[#1a1714] bg-[#e8e0d0] text-xs font-semibold">
-                <button
-                  onClick={() => setActiveTab('text')}
-                  className={`px-3 py-1.5 border transition-colors ${
-                    activeTab === 'text' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
-                  }`}
-                >
-                  Lesson Content ({resolvedSections.length} Sections)
-                </button>
-                <button
-                  onClick={() => setActiveTab('diagram')}
-                  className={`px-3 py-1.5 border transition-colors ${
-                    activeTab === 'diagram' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
-                  }`}
-                >
-                  Diagrams ({resolvedDiagrams.length > 0 ? resolvedDiagrams.length : (resolvedChart ? 1 : 0)})
-                </button>
-                <button
-                  onClick={() => setActiveTab('quiz')}
-                  className={`px-3 py-1.5 border transition-colors ${
-                    activeTab === 'quiz' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
-                  }`}
-                >
-                  Quizzes ({resolvedQuestions.length})
-                </button>
-                {(activePackage.audio || activePackage.audio_package) && (
+              {isRefined ? (
+                /* Refined Typographic Tabs */
+                <div className="flex flex-wrap gap-4 border-b border-[#1a1714]/15 pb-2 text-xs">
                   <button
-                    onClick={() => setActiveTab('audio')}
-                    className={`px-3 py-1.5 border transition-colors ${
-                      activeTab === 'audio' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                    onClick={() => setActiveTab('text')}
+                    className={`pb-1 font-medium transition-all ${
+                      activeTab === 'text'
+                        ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714]'
+                        : 'text-[#8a8075] hover:text-[#1a1714]'
                     }`}
                   >
-                    Audio SSML
+                    Lesson &bull; {resolvedSections.length} sections
                   </button>
-                )}
-                {activePackage.simplified_variation && (
                   <button
-                    onClick={() => setActiveTab('simplified')}
-                    className={`px-3 py-1.5 border transition-colors ${
-                      activeTab === 'simplified' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                    onClick={() => setActiveTab('diagram')}
+                    className={`pb-1 font-medium transition-all ${
+                      activeTab === 'diagram'
+                        ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714]'
+                        : 'text-[#8a8075] hover:text-[#1a1714]'
                     }`}
                   >
-                    Simplified Lexile
+                    Diagrams &bull; {resolvedDiagrams.length > 0 ? resolvedDiagrams.length : (resolvedChart ? 1 : 0)}
                   </button>
-                )}
-              </div>
+                  <button
+                    onClick={() => setActiveTab('quiz')}
+                    className={`pb-1 font-medium transition-all ${
+                      activeTab === 'quiz'
+                        ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714]'
+                        : 'text-[#8a8075] hover:text-[#1a1714]'
+                    }`}
+                  >
+                    Quizzes &bull; {resolvedQuestions.length}
+                  </button>
+                  {(activePackage.audio || activePackage.audio_package) && (
+                    <button
+                      onClick={() => setActiveTab('audio')}
+                      className={`pb-1 font-medium transition-all ${
+                        activeTab === 'audio'
+                          ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714]'
+                          : 'text-[#8a8075] hover:text-[#1a1714]'
+                      }`}
+                    >
+                      Audio SSML
+                    </button>
+                  )}
+                  {activePackage.simplified_variation && (
+                    <button
+                      onClick={() => setActiveTab('simplified')}
+                      className={`pb-1 font-medium transition-all ${
+                        activeTab === 'simplified'
+                          ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714]'
+                          : 'text-[#8a8075] hover:text-[#1a1714]'
+                      }`}
+                    >
+                      Simplified Lexile
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Classic Boxed Tabs */
+                <div className="flex flex-wrap gap-1 p-1 border border-[#1a1714] bg-[#e8e0d0] text-xs font-semibold">
+                  <button
+                    onClick={() => setActiveTab('text')}
+                    className={`px-3 py-1.5 border transition-colors ${
+                      activeTab === 'text' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                    }`}
+                  >
+                    Lesson Content ({resolvedSections.length} Sections)
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('diagram')}
+                    className={`px-3 py-1.5 border transition-colors ${
+                      activeTab === 'diagram' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                    }`}
+                  >
+                    Diagrams ({resolvedDiagrams.length > 0 ? resolvedDiagrams.length : (resolvedChart ? 1 : 0)})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('quiz')}
+                    className={`px-3 py-1.5 border transition-colors ${
+                      activeTab === 'quiz' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                    }`}
+                  >
+                    Quizzes ({resolvedQuestions.length})
+                  </button>
+                  {(activePackage.audio || activePackage.audio_package) && (
+                    <button
+                      onClick={() => setActiveTab('audio')}
+                      className={`px-3 py-1.5 border transition-colors ${
+                        activeTab === 'audio' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                      }`}
+                    >
+                      Audio SSML
+                    </button>
+                  )}
+                  {activePackage.simplified_variation && (
+                    <button
+                      onClick={() => setActiveTab('simplified')}
+                      className={`px-3 py-1.5 border transition-colors ${
+                        activeTab === 'simplified' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                      }`}
+                    >
+                      Simplified Lexile
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Tab 1: Lesson Content */}
               {activeTab === 'text' && (
                 <div className="space-y-6 text-[#1a1714] leading-relaxed">
                   {activePackage.framework?.pedagogical_hook && (
-                    <div className="p-4 bg-[#ebd9be] border border-[#1a1714]">
-                      <h4 className="font-bold text-[#1a1714] mb-1 font-serif text-sm">Pedagogical Hook:</h4>
-                      <p className="text-sm text-[#1a1714]/90 font-sans leading-relaxed">{activePackage.framework.pedagogical_hook}</p>
+                    <div className={isRefined ? 'p-4 bg-[#f5f0e8] border-l-2 border-[#1a1714]' : 'p-4 bg-[#ebd9be] border border-[#1a1714]'}>
+                      <h4 className="font-serif font-bold text-sm text-[#1a1714] mb-1">Hook</h4>
+                      <p className="text-sm text-[#1a1714]/90">{activePackage.framework.pedagogical_hook}</p>
                     </div>
                   )}
 
                   {activePackage.primary_text?.introduction && (
-                    <div className="p-4 bg-[#f5f0e8] border border-[#1a1714] space-y-1">
-                      <h4 className="font-bold text-[#1a1714] text-xs uppercase font-mono tracking-wider">Introduction</h4>
+                    <div className="space-y-1">
                       <p className="text-sm text-[#1a1714] font-sans leading-relaxed">{activePackage.primary_text.introduction}</p>
                     </div>
                   )}
@@ -424,20 +517,23 @@ export default function CurriculumStudioPage() {
                     const checkpoint = sec.checkpoint_question || sec.check_for_understanding_prompt;
 
                     return (
-                      <div key={idx} className="p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]/15">
-                          <h3 className="font-bold text-base text-[#1a1714] font-serif">{secTitle}</h3>
+                      <div
+                        key={idx}
+                        className={isRefined ? 'py-4 space-y-3 border-t border-[#1a1714]/15 first:border-t-0' : 'p-5 bg-[#f5f0e8] border border-[#1a1714] space-y-3'}
+                      >
+                        <div className="flex items-center justify-between pb-1">
+                          <h3 className="font-bold text-lg text-[#1a1714] font-serif">{secTitle}</h3>
                           {sec.estimated_minutes && (
-                            <span className="text-[11px] font-mono text-[#8a8075]">{sec.estimated_minutes} min</span>
+                            <span className="text-xs text-[#8a8075]">{sec.estimated_minutes} min</span>
                           )}
                         </div>
 
                         <MarkdownRenderer content={secBody} />
 
                         {sec.key_concepts && sec.key_concepts.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-1">
+                          <div className="flex flex-wrap gap-1.5 pt-1 text-xs text-[#8a8075]">
                             {sec.key_concepts.map((kc, i) => (
-                              <span key={i} className="tag-ink">
+                              <span key={i} className={isRefined ? 'bg-[#f5f0e8] px-2 py-0.5 border border-[#1a1714]/15 text-[#1a1714]' : 'tag-ink'}>
                                 #{kc}
                               </span>
                             ))}
@@ -445,8 +541,8 @@ export default function CurriculumStudioPage() {
                         )}
 
                         {checkpoint && (
-                          <div className="p-3 bg-[#cbd7c7] border border-[#1a1714] text-xs text-[#1a1714]">
-                            <strong className="block mb-0.5 font-mono">Check for Understanding:</strong> {checkpoint}
+                          <div className={isRefined ? 'p-3 bg-[#f5f0e8] border-l-2 border-[#1a1714] text-xs text-[#1a1714]' : 'p-3 bg-[#cbd7c7] border border-[#1a1714] text-xs text-[#1a1714]'}>
+                            <strong>Check:</strong> {checkpoint}
                           </div>
                         )}
                       </div>
@@ -454,8 +550,8 @@ export default function CurriculumStudioPage() {
                   })}
 
                   {activePackage.primary_text?.conclusion && (
-                    <div className="p-4 bg-[#f5f0e8] border border-[#1a1714] space-y-1">
-                      <h4 className="font-bold text-[#1a1714] text-xs uppercase font-mono tracking-wider">Conclusion</h4>
+                    <div className={isRefined ? 'pt-4 border-t border-[#1a1714]/15 space-y-1' : 'p-4 bg-[#f5f0e8] border border-[#1a1714] space-y-1'}>
+                      <h4 className="font-bold text-xs uppercase text-[#8a8075] tracking-wider font-mono">Conclusion</h4>
                       <p className="text-sm text-[#1a1714] font-sans leading-relaxed">{activePackage.primary_text.conclusion}</p>
                     </div>
                   )}
@@ -480,8 +576,8 @@ export default function CurriculumStudioPage() {
                     <h3 className="text-base font-bold text-[#1a1714] font-serif">
                       {activePackage.assessment?.quiz_title || 'Assessment Checkpoints'}
                     </h3>
-                    <span className="text-xs text-[#8a8075] font-mono">
-                      Passing: {activePackage.assessment?.passing_score || 80}%
+                    <span className="text-xs text-[#8a8075]">
+                      Passing score: {activePackage.assessment?.passing_score || 80}%
                     </span>
                   </div>
 
@@ -490,7 +586,7 @@ export default function CurriculumStudioPage() {
                       <QuizCard key={q.question_id || q.id || idx} question={q} index={idx} />
                     ))
                   ) : (
-                    <div className="p-8 text-center text-xs text-[#8a8075] paper-card">
+                    <div className="p-8 text-center text-xs text-[#8a8075]">
                       No quiz questions generated for this module.
                     </div>
                   )}
@@ -499,12 +595,12 @@ export default function CurriculumStudioPage() {
 
               {/* Tab 4: Audio Script */}
               {activeTab === 'audio' && (
-                <div className="space-y-3 font-mono text-xs">
+                <div className="space-y-3 text-xs">
                   {((activePackage.audio?.segments || activePackage.audio_package?.segments || []) as AudioSegmentItem[]).map(
                     (seg, i) => (
-                      <div key={i} className="p-3 bg-[#f5f0e8] border border-[#1a1714] space-y-1">
-                        <div className="flex items-center justify-between text-[#c84b2f] font-semibold text-[11px]">
-                          <span>Speaker: {seg.speaker_role || 'Tutor'}</span>
+                      <div key={i} className={isRefined ? 'p-3 bg-[#f5f0e8] border-l border-[#1a1714] space-y-1' : 'p-3 bg-[#f5f0e8] border border-[#1a1714] space-y-1'}>
+                        <div className="flex items-center justify-between text-[#c84b2f] font-semibold text-xs">
+                          <span>{seg.speaker_role || 'Tutor'}</span>
                           <span className="text-[#8a8075]">{seg.voice_tone || 'Standard'}</span>
                         </div>
                         <p className="text-[#1a1714] font-sans text-xs">{seg.ssml_content}</p>
@@ -517,17 +613,17 @@ export default function CurriculumStudioPage() {
               {/* Tab 5: Simplified Variation */}
               {activeTab === 'simplified' && activePackage.simplified_variation && (
                 <div className="space-y-4">
-                  <div className="p-3 bg-[#ebd4cc] border border-[#1a1714] text-xs">
-                    Simplified Lexile: <strong className="text-[#1a1714]">{activePackage.simplified_variation.simplified_lexile_level}</strong>
+                  <div className={isRefined ? 'p-3 bg-[#f5f0e8] border-l-2 border-[#1a1714] text-xs' : 'p-3 bg-[#ebd4cc] border border-[#1a1714] text-xs'}>
+                    Reading Level: <strong className="text-[#1a1714]">{activePackage.simplified_variation.simplified_lexile_level}</strong>
                   </div>
-                  <div className="p-5 bg-[#f5f0e8] border border-[#1a1714] text-xs text-[#1a1714] leading-relaxed whitespace-pre-wrap">
+                  <div className="p-4 bg-[#f5f0e8] text-xs text-[#1a1714] leading-relaxed whitespace-pre-wrap">
                     {activePackage.simplified_variation.simplified_text}
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="paper-card p-16 text-center text-xs text-[#8a8075]">
+            <div className="p-16 text-center text-xs text-[#8a8075]">
               Select a curriculum module from the library on the left.
             </div>
           )}
