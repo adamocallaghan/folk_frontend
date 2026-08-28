@@ -4,11 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCurriculumPackage, sendStudentChat, evaluateSession, getStudentProfile } from '@/lib/api';
-import { LessonPackage, ChatMessage, LessonSectionItem, LongitudinalProfile } from '@/types';
+import { LessonPackage, ChatMessage, LessonSectionItem, LongitudinalProfile, WorkedExampleItem, ConceptualAnalogyItem } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw, UserCheck } from 'lucide-react';
+import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw, UserCheck, CheckSquare, Lightbulb } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function StudentLessonPage() {
@@ -117,7 +117,6 @@ export default function StudentLessonPage() {
       setSessionEvaluation(res.session_evaluation || { comprehension_score: 85, cognitive_load_index: 'Optimal Retention' });
     } catch (err: any) {
       console.error('Evaluation error:', err);
-      // If network timed out but Firestore updated, compute local fallback summary
       const correctCount = Object.values(quizScore).filter(Boolean).length;
       const totalQ = Object.keys(quizScore).length || 1;
       const score = Math.round((correctCount / totalQ) * 100);
@@ -155,6 +154,16 @@ export default function StudentLessonPage() {
     '';
 
   const resolvedQuestions = lessonPackage?.assessment?.questions || [];
+
+  const resolvedWorkedExamples: WorkedExampleItem[] =
+    lessonPackage?.worked_examples ||
+    lessonPackage?.worked_examples_package?.examples ||
+    [];
+
+  const resolvedAnalogies: ConceptualAnalogyItem[] =
+    lessonPackage?.conceptual_analogies ||
+    lessonPackage?.conceptual_analogies_package?.analogies ||
+    [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
@@ -228,6 +237,76 @@ export default function StudentLessonPage() {
                 );
               })}
             </div>
+
+            {/* Tailored Worked Examples for this Student */}
+            {resolvedWorkedExamples.length > 0 && (
+              <div className={`pt-6 space-y-4 ${isRefined ? 'border-t border-[#1a1714]/15' : 'border-t border-[#1a1714]'}`}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-[#1a1714] font-serif flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-[#c84b2f]" /> Step-by-Step Worked Practice
+                  </h3>
+                  <span className="text-xs text-[#8a8075]">Tailored for {studentProfile?.display_name || studentId}</span>
+                </div>
+
+                <div className="space-y-4">
+                  {resolvedWorkedExamples.map((ex, idx) => (
+                    <div key={idx} className={isRefined ? 'p-5 bg-[#f5f0e8] border border-[#1a1714]/15 space-y-3' : 'p-5 bg-[#ebd4cc] border border-[#1a1714] space-y-3'}>
+                      <div className="flex items-baseline justify-between">
+                        <h4 className="font-bold font-serif text-base text-[#1a1714]">{ex.title}</h4>
+                        <span className="text-xs font-mono text-[#c84b2f]">Worked Example {idx + 1}</span>
+                      </div>
+                      <p className="text-xs text-[#1a1714] font-medium leading-relaxed">{ex.problem_or_scenario}</p>
+
+                      <div className="space-y-2 pt-2">
+                        {ex.steps.map((st) => (
+                          <div key={st.step_number} className="p-3 bg-[#ffffff] border border-[#1a1714]/15 space-y-1 text-xs">
+                            <strong className="block text-[#1a1714]">Step {st.step_number}: {st.step_title}</strong>
+                            <p className="text-[#1a1714]/90">{st.explanation}</p>
+                            {st.key_insight && (
+                              <div className="text-[11px] text-[#c84b2f] pt-1">
+                                <strong>Tip:</strong> {st.key_insight}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-3 bg-[#cbd7c7] border border-[#1a1714]/15 text-xs text-[#1a1714]">
+                        <strong>Core Takeaway:</strong> {ex.core_takeaway}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tailored Analogies & Intuition Anchors */}
+            {resolvedAnalogies.length > 0 && (
+              <div className={`pt-6 space-y-4 ${isRefined ? 'border-t border-[#1a1714]/15' : 'border-t border-[#1a1714]'}`}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-[#1a1714] font-serif flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-[#c84b2f]" /> Intuitive Analogies & Thought Experiments
+                  </h3>
+                  <span className="text-xs text-[#8a8075]">Visual / Concrete Anchors</span>
+                </div>
+
+                <div className="space-y-4">
+                  {resolvedAnalogies.map((an, idx) => (
+                    <div key={idx} className={isRefined ? 'p-5 bg-[#f5f0e8] border border-[#1a1714]/15 space-y-3' : 'p-5 bg-[#ebd9be] border border-[#1a1714] space-y-3'}>
+                      <h4 className="font-bold font-serif text-base text-[#1a1714]">{an.concept_name}</h4>
+                      <div className="p-3 bg-[#ffffff] border border-[#1a1714]/15 text-xs space-y-1">
+                        <strong className="text-[#c84b2f] block">Real-World Analogy:</strong>
+                        <p className="text-[#1a1714] leading-relaxed">{an.real_world_analogy}</p>
+                      </div>
+                      <div className="p-3 bg-[#cbd7c7] border border-[#1a1714]/15 text-xs space-y-1">
+                        <strong className="text-[#1a1714] block">Thought Experiment:</strong>
+                        <p className="text-[#1a1714] leading-relaxed">{an.thought_experiment_prompt}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {lessonPackage?.primary_text?.conclusion && (
               <div className={isRefined ? 'pt-4 border-t border-[#1a1714]/15 space-y-1' : 'p-4 bg-[#f5f0e8] border border-[#1a1714] space-y-1'}>

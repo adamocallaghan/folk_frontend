@@ -80,7 +80,7 @@ export default function QuizCard({ question, index, onAnswerSubmit }: QuizCardPr
       {/* Options List */}
       {question.options && question.options.length > 0 ? (
         <div className="space-y-2">
-          {question.options.map((opt, i) => {
+          {question.options.map((opt: string, i: number) => {
             const isSelected = selectedOption === opt;
             let btnClass = 'bg-[#f5f0e8] border-[#1a1714] text-[#1a1714] hover:bg-[#e8e0d0]';
             if (isSelected) {

@@ -9,9 +9,11 @@ import {
   Clock,
   CheckCircle2,
   UserCheck,
+  Lightbulb,
+  CheckSquare,
 } from 'lucide-react';
 import { generateCurriculum, listAllCurricula, getCurriculumPackage, listStudentProfiles, CurriculumSummary } from '@/lib/api';
-import { LessonPackage, LessonSectionItem, AudioSegmentItem, LongitudinalProfile } from '@/types';
+import { LessonPackage, LessonSectionItem, AudioSegmentItem, LongitudinalProfile, WorkedExampleItem, ConceptualAnalogyItem } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -39,7 +41,7 @@ export default function CurriculumStudioPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Tab
-  const [activeTab, setActiveTab] = useState<'text' | 'diagram' | 'quiz' | 'audio' | 'simplified'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'diagram' | 'quiz' | 'examples' | 'analogies' | 'audio' | 'simplified'>('text');
 
   const refreshList = async () => {
     setLoadingList(true);
@@ -120,6 +122,17 @@ export default function CurriculumStudioPage() {
     '';
 
   const resolvedQuestions = activePackage?.assessment?.questions || [];
+  
+  const resolvedWorkedExamples: WorkedExampleItem[] =
+    activePackage?.worked_examples ||
+    activePackage?.worked_examples_package?.examples ||
+    [];
+
+  const resolvedAnalogies: ConceptualAnalogyItem[] =
+    activePackage?.conceptual_analogies ||
+    activePackage?.conceptual_analogies_package?.analogies ||
+    [];
+
   const selectedStudentObj = students.find((s) => s.student_id === targetStudentId);
 
   return (
@@ -132,7 +145,7 @@ export default function CurriculumStudioPage() {
             Curriculum Studio
           </h1>
           <p className="text-xs sm:text-sm text-[#8a8075] mt-1">
-            Synthesize structured lesson content, conceptual diagrams, and quizzes tailored to students.
+            Synthesize structured lesson content, conceptual diagrams, worked examples, and quizzes tailored to students.
           </p>
         </div>
 
@@ -152,14 +165,14 @@ export default function CurriculumStudioPage() {
         </button>
       </div>
 
-      {/* Main Grid: Left Library Sidebar | Right Inspector */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Library List */}
         <div className={`lg:col-span-4 space-y-3 ${isRefined ? 'border-r border-[#1a1714]/15 pr-6' : 'border border-[#1a1714] bg-[#e9e2d5] p-4'}`}>
           <div className="flex items-center justify-between pb-2">
             <h3 className={`text-xs font-bold text-[#1a1714] flex items-center gap-1.5 ${isRefined ? 'font-sans uppercase tracking-wider text-[#8a8075]' : 'uppercase tracking-wider font-mono'}`}>
               <BookOpen className="h-3.5 w-3.5" />
-              {isRefined ? `Saved Modules (${curriculaList.length})` : `Saved Modules (${curriculaList.length})`}
+              Saved Modules ({curriculaList.length})
             </h3>
             <button
               onClick={refreshList}
@@ -195,7 +208,7 @@ export default function CurriculumStudioPage() {
                         </span>
                       </div>
 
-                      <div className={`flex items-center gap-2 text-xs ${isSelected ? 'text-[#e8e0d0]/80' : 'text-[#8a8075]'}`}>
+                      <div className={`flex flex-wrap items-center gap-2 text-xs ${isSelected ? 'text-[#e8e0d0]/80' : 'text-[#8a8075]'}`}>
                         <span>{item.target_age_group}</span>
                         {item.has_diagram && <span>&bull; Diagram</span>}
                         {item.question_count > 0 && <span>&bull; {item.question_count} Qs</span>}
@@ -237,7 +250,7 @@ export default function CurriculumStudioPage() {
           )}
         </div>
 
-        {/* Right Column: Creation Form OR Full Inspector */}
+        {/* Right Column: Creation Form OR Inspector */}
         <div className="lg:col-span-8">
           {isCreatingNew ? (
             /* Creation Form */
@@ -247,7 +260,7 @@ export default function CurriculumStudioPage() {
                   <Sparkles className="h-4 w-4 text-[#c84b2f]" /> Create Lesson
                 </h2>
                 <p className="text-xs text-[#8a8075] mt-0.5">
-                  Synthesize structured lesson text, conceptual diagrams, and quizzes tailored to students.
+                  Synthesize structured lesson text, conceptual diagrams, worked examples, and quizzes tailored to students.
                 </p>
               </div>
 
@@ -299,14 +312,19 @@ export default function CurriculumStudioPage() {
                 </div>
 
                 {selectedStudentObj && (
-                  <div className="p-3 bg-[#f5f0e8] border border-[#1a1714]/20 space-y-1 text-xs text-[#1a1714]">
+                  <div className="p-3.5 bg-[#f5f0e8] border border-[#1a1714]/20 space-y-1 text-xs text-[#1a1714]">
                     <div className="flex items-center justify-between font-semibold">
-                      <span>Personalizing for: {selectedStudentObj.display_name}</span>
+                      <span>Tailoring for: {selectedStudentObj.display_name}</span>
                       <span className="text-[#8a8075]">Reading: {selectedStudentObj.reading_level}</span>
                     </div>
                     {selectedStudentObj.reading_difficulty_flags && selectedStudentObj.reading_difficulty_flags.length > 0 && (
                       <div className="text-[11px] text-[#c84b2f]">
-                        Accommodations: {selectedStudentObj.reading_difficulty_flags.join(', ')}
+                        Triggering Accommodations: {selectedStudentObj.reading_difficulty_flags.join(', ')}
+                      </div>
+                    )}
+                    {selectedStudentObj.modalities_flags && selectedStudentObj.modalities_flags.length > 0 && (
+                      <div className="text-[11px] text-[#1a1714]/80">
+                        Triggering Modalities: {selectedStudentObj.modalities_flags.join(', ')}
                       </div>
                     )}
                   </div>
@@ -329,7 +347,7 @@ export default function CurriculumStudioPage() {
                       onChange={(e) => setEnableSimplification(e.target.checked)}
                       className="border-[#1a1714] text-[#1a1714] h-4 w-4"
                     />
-                    <span>Generate Simplified Variation</span>
+                    <span>Generate Simplified Lexile Variation</span>
                   </label>
                 </div>
 
@@ -339,7 +357,7 @@ export default function CurriculumStudioPage() {
                     disabled={generating}
                     className={isRefined ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] font-semibold text-xs py-2 px-4 flex-1' : 'btn-ink flex-1'}
                   >
-                    {generating ? 'Generating Lesson...' : 'Generate Lesson'}
+                    {generating ? 'Synthesizing Multimodal Lesson Assets...' : 'Generate Personalized Curriculum'}
                   </button>
                   <button
                     type="button"
@@ -357,7 +375,7 @@ export default function CurriculumStudioPage() {
               {generating && (
                 <div className="p-3.5 border border-[#1a1714]/20 bg-[#f5f0e8] flex items-center gap-2 text-xs text-[#1a1714]">
                   <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#c84b2f]" />
-                  <span>Synthesizing multi-agent lesson assets on Cloud Run...</span>
+                  <span>Invoking Lead Architect, Content Author, and Conditional Sub-Agents on Cloud Run...</span>
                 </div>
               )}
             </div>
@@ -419,6 +437,30 @@ export default function CurriculumStudioPage() {
                   >
                     Quizzes &bull; {resolvedQuestions.length}
                   </button>
+                  {resolvedWorkedExamples.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('examples')}
+                      className={`pb-1 font-medium transition-all ${
+                        activeTab === 'examples'
+                          ? 'text-[#c84b2f] font-bold border-b-2 border-[#c84b2f]'
+                          : 'text-[#c84b2f]/80 hover:text-[#c84b2f]'
+                      }`}
+                    >
+                      Worked Examples &bull; {resolvedWorkedExamples.length}
+                    </button>
+                  )}
+                  {resolvedAnalogies.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('analogies')}
+                      className={`pb-1 font-medium transition-all ${
+                        activeTab === 'analogies'
+                          ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714]'
+                          : 'text-[#8a8075] hover:text-[#1a1714]'
+                      }`}
+                    >
+                      Analogies &bull; {resolvedAnalogies.length}
+                    </button>
+                  )}
                   {(activePackage.audio || activePackage.audio_package) && (
                     <button
                       onClick={() => setActiveTab('audio')}
@@ -453,7 +495,7 @@ export default function CurriculumStudioPage() {
                       activeTab === 'text' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
                     }`}
                   >
-                    Lesson Content ({resolvedSections.length} Sections)
+                    Lesson ({resolvedSections.length})
                   </button>
                   <button
                     onClick={() => setActiveTab('diagram')}
@@ -471,6 +513,26 @@ export default function CurriculumStudioPage() {
                   >
                     Quizzes ({resolvedQuestions.length})
                   </button>
+                  {resolvedWorkedExamples.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('examples')}
+                      className={`px-3 py-1.5 border transition-colors ${
+                        activeTab === 'examples' ? 'bg-[#c84b2f] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#ebd4cc] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                      }`}
+                    >
+                      Worked Examples ({resolvedWorkedExamples.length})
+                    </button>
+                  )}
+                  {resolvedAnalogies.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('analogies')}
+                      className={`px-3 py-1.5 border transition-colors ${
+                        activeTab === 'analogies' ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]' : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#e9e2d5]'
+                      }`}
+                    >
+                      Analogies ({resolvedAnalogies.length})
+                    </button>
+                  )}
                   {(activePackage.audio || activePackage.audio_package) && (
                     <button
                       onClick={() => setActiveTab('audio')}
@@ -558,7 +620,88 @@ export default function CurriculumStudioPage() {
                 </div>
               )}
 
-              {/* Tab 2: Visual Diagrams */}
+              {/* Tab: Worked Examples */}
+              {activeTab === 'examples' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-[#1a1714] font-serif flex items-center gap-2">
+                      <CheckSquare className="h-4 w-4 text-[#c84b2f]" /> Tailored Worked Examples
+                    </h3>
+                    <span className="text-xs text-[#8a8075]">Generated for Step-by-Step Accommodations</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {resolvedWorkedExamples.map((ex, idx) => (
+                      <div key={idx} className={isRefined ? 'p-5 bg-[#f5f0e8] border border-[#1a1714]/15 space-y-3' : 'p-5 bg-[#ebd4cc] border border-[#1a1714] space-y-3'}>
+                        <div className="flex items-baseline justify-between">
+                          <h4 className="font-bold font-serif text-base text-[#1a1714]">{ex.title}</h4>
+                          <span className="text-xs font-mono text-[#c84b2f]">Example {idx + 1}</span>
+                        </div>
+                        <p className="text-xs text-[#1a1714] font-medium leading-relaxed">{ex.problem_or_scenario}</p>
+
+                        <div className="space-y-2 pt-2">
+                          {ex.steps.map((st) => (
+                            <div key={st.step_number} className="p-3 bg-[#ffffff] border border-[#1a1714]/15 space-y-1 text-xs">
+                              <div className="flex items-center justify-between font-bold text-[#1a1714]">
+                                <span>Step {st.step_number}: {st.step_title}</span>
+                              </div>
+                              <p className="text-[#1a1714]/90">{st.explanation}</p>
+                              {st.key_insight && (
+                                <div className="text-[11px] text-[#c84b2f] pt-1">
+                                  <strong>Key Insight:</strong> {st.key_insight}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-3 bg-[#cbd7c7] border border-[#1a1714]/15 text-xs text-[#1a1714]">
+                          <strong>Core Takeaway:</strong> {ex.core_takeaway}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Conceptual Analogies & Thought Experiments */}
+              {activeTab === 'analogies' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-[#1a1714] font-serif flex items-center gap-2">
+                      <Lightbulb className="h-4 w-4 text-[#c84b2f]" /> Intuitive Analogies & Thought Experiments
+                    </h3>
+                    <span className="text-xs text-[#8a8075]">Concrete Intuition Anchors</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {resolvedAnalogies.map((an, idx) => (
+                      <div key={idx} className={isRefined ? 'p-5 bg-[#f5f0e8] border border-[#1a1714]/15 space-y-3' : 'p-5 bg-[#ebd9be] border border-[#1a1714] space-y-3'}>
+                        <div className="flex items-baseline justify-between">
+                          <h4 className="font-bold font-serif text-base text-[#1a1714]">{an.concept_name}</h4>
+                          <span className="text-xs text-[#8a8075]">Analogy {idx + 1}</span>
+                        </div>
+
+                        <div className="p-3 bg-[#ffffff] border border-[#1a1714]/15 text-xs space-y-1">
+                          <strong className="block text-[#c84b2f]">Everyday Analogy:</strong>
+                          <p className="text-[#1a1714] leading-relaxed">{an.real_world_analogy}</p>
+                        </div>
+
+                        <div className="p-3 bg-[#cbd7c7] border border-[#1a1714]/15 text-xs space-y-1">
+                          <strong className="block text-[#1a1714]">Thought Experiment:</strong>
+                          <p className="text-[#1a1714] leading-relaxed">{an.thought_experiment_prompt}</p>
+                        </div>
+
+                        <p className="text-[11px] text-[#8a8075]">
+                          <strong>Why it works:</strong> {an.why_it_works}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Visual Diagrams */}
               {activeTab === 'diagram' && (
                 <div>
                   <MermaidViewer
@@ -569,7 +712,7 @@ export default function CurriculumStudioPage() {
                 </div>
               )}
 
-              {/* Tab 3: Quizzes */}
+              {/* Tab: Quizzes */}
               {activeTab === 'quiz' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -593,7 +736,7 @@ export default function CurriculumStudioPage() {
                 </div>
               )}
 
-              {/* Tab 4: Audio Script */}
+              {/* Tab: Audio Script */}
               {activeTab === 'audio' && (
                 <div className="space-y-3 text-xs">
                   {((activePackage.audio?.segments || activePackage.audio_package?.segments || []) as AudioSegmentItem[]).map(
@@ -603,21 +746,21 @@ export default function CurriculumStudioPage() {
                           <span>{seg.speaker_role || 'Tutor'}</span>
                           <span className="text-[#8a8075]">{seg.voice_tone || 'Standard'}</span>
                         </div>
-                        <p className="text-[#1a1714] font-sans text-xs">{seg.ssml_content}</p>
+                        <p className="text-[#1a1714] font-sans text-xs">{seg.ssml_content || seg.text}</p>
                       </div>
                     )
                   )}
                 </div>
               )}
 
-              {/* Tab 5: Simplified Variation */}
+              {/* Tab: Simplified Variation */}
               {activeTab === 'simplified' && activePackage.simplified_variation && (
                 <div className="space-y-4">
                   <div className={isRefined ? 'p-3 bg-[#f5f0e8] border-l-2 border-[#1a1714] text-xs' : 'p-3 bg-[#ebd4cc] border border-[#1a1714] text-xs'}>
-                    Reading Level: <strong className="text-[#1a1714]">{activePackage.simplified_variation.simplified_lexile_level}</strong>
+                    Reading Level: <strong className="text-[#1a1714]">{activePackage.simplified_variation.simplified_lexile_level || activePackage.simplified_variation.needed_for_reading_level}</strong>
                   </div>
                   <div className="p-4 bg-[#f5f0e8] text-xs text-[#1a1714] leading-relaxed whitespace-pre-wrap">
-                    {activePackage.simplified_variation.simplified_text}
+                    {activePackage.simplified_variation.simplified_text || activePackage.simplified_variation.simplified_introduction}
                   </div>
                 </div>
               )}
