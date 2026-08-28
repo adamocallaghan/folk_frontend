@@ -16,14 +16,16 @@ function sanitizeMermaidCode(rawCode: string): string {
   let code = rawCode.trim();
   code = code.replace(/^```(mermaid)?\s*/i, '').replace(/```$/i, '').trim();
 
+  // Clean raw comparison operators in mindmaps or unquoted labels that confuse mermaid lexer
+  code = code.replace(/<=\s*/g, '&le; ').replace(/>=\s*/g, '&ge; ');
+
   // Fix single-line flowcharts by inserting newlines before node connectors
   if (!code.includes('\n') && (code.startsWith('flowchart') || code.startsWith('graph'))) {
     const match = code.match(/^(flowchart\s+[A-Z]{2}|graph\s+[A-Z]{2})\s+(.*)$/i);
     if (match) {
       const header = match[1];
       const body = match[2];
-      // Insert newlines between statement transitions
-      const lines = body.replace(/(\s+-->\|[^\|]+\|\s+|\s+-->\s+)/g, '\n  $1');
+      const lines = body.replace(/(\s+-->\|[^\|]+\|\s+|\s+-->\s+|\s+---\s+)/g, '\n  $1');
       code = `${header}\n  ${lines}`;
     }
   }
