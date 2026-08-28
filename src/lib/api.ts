@@ -9,8 +9,10 @@ export interface CurriculumSummary {
   duration_minutes: number;
   question_count: number;
   has_diagram: boolean;
-  has_audio: boolean;
-  has_simplified: boolean;
+  has_audio?: boolean;
+  has_simplified?: boolean;
+  has_worked_examples?: boolean;
+  has_analogies?: boolean;
 }
 
 export async function fetchHealth() {

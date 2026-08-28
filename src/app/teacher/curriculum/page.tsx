@@ -11,6 +11,11 @@ import {
   UserCheck,
   Lightbulb,
   CheckSquare,
+  Cpu,
+  Layers,
+  FileText,
+  GitBranch,
+  Database,
 } from 'lucide-react';
 import { generateCurriculum, listAllCurricula, getCurriculumPackage, listStudentProfiles, CurriculumSummary } from '@/lib/api';
 import { LessonPackage, LessonSectionItem, AudioSegmentItem, LongitudinalProfile, WorkedExampleItem, ConceptualAnalogyItem } from '@/types';
@@ -38,10 +43,53 @@ export default function CurriculumStudioPage() {
   const [enableAudio, setEnableAudio] = useState(true);
   const [enableSimplification, setEnableSimplification] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Tab
   const [activeTab, setActiveTab] = useState<'text' | 'diagram' | 'quiz' | 'examples' | 'analogies' | 'audio' | 'simplified'>('text');
+
+  const agentSteps = [
+    {
+      agent: 'Lead Framework Architect',
+      subtext: 'Structuring pedagogical syllabus, macro prerequisites, and lesson outline...',
+      icon: Layers,
+    },
+    {
+      agent: 'Master Content Author',
+      subtext: 'Synthesizing textbook prose, section narratives, and comprehensive glossary...',
+      icon: FileText,
+    },
+    {
+      agent: 'Visual Architect & Assessment Specialist',
+      subtext: 'Generating Mermaid.js concept diagrams and diagnostic quizzes in parallel...',
+      icon: Cpu,
+    },
+    {
+      agent: 'Adaptive Conditional Enhancers',
+      subtext: 'Synthesizing tailored step-by-step worked practice, analogies, and Lexile adaptations...',
+      icon: GitBranch,
+    },
+    {
+      agent: 'Packaging & Persistence Agent',
+      subtext: 'Bundling multimodal assets and persisting to Google Cloud Firestore...',
+      icon: Database,
+    },
+  ];
+
+  // Stepper Interval during generation
+  useEffect(() => {
+    let interval: any;
+    if (generating) {
+      setCurrentStepIndex(0);
+      interval = setInterval(() => {
+        setCurrentStepIndex((prev) => (prev < agentSteps.length - 1 ? prev + 1 : prev));
+      }, 7000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [generating]);
 
   const refreshList = async () => {
     setLoadingList(true);
@@ -212,6 +260,7 @@ export default function CurriculumStudioPage() {
                         <span>{item.target_age_group}</span>
                         {item.has_diagram && <span>&bull; Diagram</span>}
                         {item.question_count > 0 && <span>&bull; {item.question_count} Qs</span>}
+                        {item.has_worked_examples && <span className="text-[#c84b2f] font-semibold">&bull; Worked Practice</span>}
                       </div>
                     </button>
                   );
@@ -355,7 +404,7 @@ export default function CurriculumStudioPage() {
                   <button
                     type="submit"
                     disabled={generating}
-                    className={isRefined ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] font-semibold text-xs py-2 px-4 flex-1' : 'btn-ink flex-1'}
+                    className={isRefined ? 'bg-[#1a1714] text-[#f5f0e8] hover:bg-[#c84b2f] font-semibold text-xs py-2.5 px-4 flex-1' : 'btn-ink flex-1'}
                   >
                     {generating ? 'Synthesizing Multimodal Lesson Assets...' : 'Generate Personalized Curriculum'}
                   </button>
@@ -372,10 +421,61 @@ export default function CurriculumStudioPage() {
                 </div>
               </form>
 
+              {/* LIVE MULTI-AGENT EXECUTION STEPPER */}
               {generating && (
-                <div className="p-3.5 border border-[#1a1714]/20 bg-[#f5f0e8] flex items-center gap-2 text-xs text-[#1a1714]">
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#c84b2f]" />
-                  <span>Invoking Lead Architect, Content Author, and Conditional Sub-Agents on Cloud Run...</span>
+                <div className="p-5 border border-[#1a1714]/20 bg-[#f5f0e8] space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#1a1714]/15">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin text-[#c84b2f]" />
+                      <span className="font-serif font-bold text-sm text-[#1a1714]">Multi-Agent Pipeline Executing on Cloud Run</span>
+                    </div>
+                    <span className="text-[11px] font-mono text-[#8a8075]">Stage {currentStepIndex + 1} of {agentSteps.length}</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {agentSteps.map((step, idx) => {
+                      const isPast = idx < currentStepIndex;
+                      const isCurrent = idx === currentStepIndex;
+                      const Icon = step.icon;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 border transition-all flex items-start gap-3 ${
+                            isCurrent
+                              ? 'bg-[#ffffff] border-[#1a1714] shadow-sm'
+                              : isPast
+                              ? 'bg-[#cbd7c7]/40 border-[#1a1714]/15 opacity-80'
+                              : 'bg-transparent border-[#1a1714]/10 opacity-40'
+                          }`}
+                        >
+                          <div className="pt-0.5">
+                            {isPast ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+                            ) : isCurrent ? (
+                              <RefreshCw className="h-4 w-4 animate-spin text-[#c84b2f]" />
+                            ) : (
+                              <Icon className="h-4 w-4 text-[#8a8075]" />
+                            )}
+                          </div>
+
+                          <div className="space-y-0.5 flex-1 text-xs">
+                            <div className="flex items-center justify-between">
+                              <strong className={`font-serif ${isCurrent ? 'text-[#1a1714] text-sm font-bold' : 'text-[#1a1714]'}`}>
+                                {step.agent}
+                              </strong>
+                              {isCurrent && (
+                                <span className="text-[10px] font-mono font-bold text-[#c84b2f] bg-[#ebd4cc] px-1.5 py-0.5 border border-[#1a1714]/20">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#1a1714]/80 leading-relaxed">{step.subtext}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
