@@ -98,10 +98,15 @@ export default function CurriculumStudioPage() {
         listAllCurricula().catch(() => ({ curricula: [] })),
         listStudentProfiles().catch(() => ({ profiles: [] })),
       ]);
-      setCurriculaList(currRes.curricula || []);
-      setStudents(studRes.profiles || []);
-      if (currRes.curricula && currRes.curricula.length > 0 && !selectedPkgId) {
-        loadPackage(currRes.curricula[0].package_id);
+      const curricula = currRes.curricula || [];
+      const profs = studRes.profiles || [];
+      setCurriculaList(curricula);
+      setStudents(profs);
+      if (profs.length > 0 && !targetStudentId) {
+        setTargetStudentId(profs[0].student_id);
+      }
+      if (curricula.length > 0 && !selectedPkgId) {
+        loadPackage(curricula[0].package_id);
       }
     } catch (err) {
       console.warn('Failed to load list:', err);
@@ -329,17 +334,17 @@ export default function CurriculumStudioPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#1a1714] mb-1.5 flex items-center gap-1">
-                      <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> Tailor for Specific Student
+                      <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> Student Targeting / Classroom Scope
                     </label>
                     <select
                       value={targetStudentId}
                       onChange={(e) => setTargetStudentId(e.target.value)}
-                      className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
+                      className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3 py-2 text-xs text-[#1a1714] font-medium focus:outline-none focus:border-[#1a1714]"
                     >
-                      <option value="">General Audience (No specific profile)</option>
+                      <option value="">Whole Classroom (Adapts for all {students.length} student profiles)</option>
                       {students.map((st) => (
                         <option key={st.student_id} value={st.student_id}>
-                          {st.display_name || st.student_id} &bull; {st.reading_level || 'Grade 7-8'}
+                          Target: {st.display_name || st.student_id} &bull; {st.reading_level || 'Grade 7-8'}
                         </option>
                       ))}
                     </select>
@@ -360,7 +365,7 @@ export default function CurriculumStudioPage() {
                   </div>
                 </div>
 
-                {selectedStudentObj && (
+                {selectedStudentObj ? (
                   <div className="p-3.5 bg-[#f5f0e8] border border-[#1a1714]/20 space-y-1 text-xs text-[#1a1714]">
                     <div className="flex items-center justify-between font-semibold">
                       <span>Tailoring for: {selectedStudentObj.display_name}</span>
@@ -376,6 +381,16 @@ export default function CurriculumStudioPage() {
                         Triggering Modalities: {selectedStudentObj.modalities_flags.join(', ')}
                       </div>
                     )}
+                  </div>
+                ) : (
+                  <div className="p-3.5 bg-[#f5f0e8] border border-[#1a1714]/20 space-y-1 text-xs text-[#1a1714]">
+                    <div className="flex items-center gap-1.5 font-bold text-[#1a1714]">
+                      <Sparkles className="h-3.5 w-3.5 text-[#c84b2f]" />
+                      <span>Universal Classroom Adaptation Active</span>
+                    </div>
+                    <p className="text-[11px] text-[#1a1714]/80 leading-relaxed">
+                      The workflow will evaluate the whole active roster ({students.length} student profiles) and synthesize core text, diagrams, step-by-step worked practice, and analogies to satisfy all students in one lesson.
+                    </p>
                   </div>
                 )}
 
