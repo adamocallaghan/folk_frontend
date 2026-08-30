@@ -148,7 +148,7 @@ export default function TeacherGovernancePage() {
         <div>
           {!isRefined && <span className="tag-ink mb-1">Human-In-The-Loop Governance</span>}
           <h1 className="text-3xl sm:text-4xl font-bold text-[#1a1714] font-serif tracking-tight">
-            Teacher Governance & Copilot
+            Teacher Governance
           </h1>
           <p className="text-xs sm:text-sm text-[#8a8075] mt-1">
             Review student comprehension profiles and approve targeted remediation strategies with Athena.

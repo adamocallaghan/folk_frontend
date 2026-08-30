@@ -3,13 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Users, Compass, SlidersHorizontal, LogOut, UserCheck } from 'lucide-react';
+import { BookOpen, Users, Compass, LogOut, UserCheck } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const isRefined = theme === 'refined';
 
   const [userSession, setUserSession] = useState<{ username: string; role: string } | null>(null);
@@ -47,153 +47,68 @@ export default function Header() {
 
   if (pathname === '/login') {
     return (
-      <header className={`sticky top-0 z-50 transition-colors ${
-        isRefined
-          ? 'bg-[#ffffff]/90 backdrop-blur-md border-b border-[#1a1714]/15'
-          : 'bg-[#e8e0d0] border-b border-[#1a1714]'
-      }`}>
+      <header className="sticky top-0 z-50 bg-[#ffffff]/90 backdrop-blur-md border-b border-[#1a1714]/15 transition-colors">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between">
             <Link href="/login" className="flex items-center gap-2.5">
-              <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-[#1a1714]">
-                Folk Agents
+              <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#1a1714]">
+                Folk
               </span>
             </Link>
-
-            <button
-              onClick={toggleTheme}
-              className={`flex items-center gap-1 text-[11px] transition-all ${
-                isRefined
-                  ? 'border border-[#1a1714]/20 hover:border-[#1a1714] text-[#1a1714] px-2.5 py-1'
-                  : 'btn-paper py-1 px-2 text-[10px]'
-              }`}
-            >
-              <SlidersHorizontal className="h-3 w-3 text-[#c84b2f]" />
-              <span>Style: <strong>{isRefined ? 'Refined' : 'Classic'}</strong></span>
-            </button>
           </div>
         </div>
       </header>
     );
   }
 
-  if (isRefined) {
-    return (
-      <header className="sticky top-0 z-50 bg-[#ffffff]/95 backdrop-blur-md border-b border-[#1a1714]/15 transition-colors">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-14 items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5">
-              <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-[#1a1714]">
-                Folk Agents
-              </span>
-            </Link>
-
-            {/* Navigation Links */}
-            <nav className="hidden md:flex items-center gap-6">
-              {navItems.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`text-xs font-medium transition-colors ${
-                      isActive
-                        ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714] pb-0.5'
-                        : 'text-[#8a8075] hover:text-[#1a1714]'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* User Session Badge & Actions */}
-            <div className="flex items-center gap-3">
-              {userSession && (
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#1a1714]">
-                  <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" />
-                  <span className="font-medium">{userSession.username}</span>
-                  <span className="text-[10px] text-[#8a8075]">({userSession.role})</span>
-                </div>
-              )}
-
-              <button
-                onClick={toggleTheme}
-                className="flex items-center gap-1 text-[11px] border border-[#1a1714]/20 hover:border-[#1a1714] text-[#1a1714] px-2.5 py-1 transition-all"
-                title="Toggle UI Aesthetics"
-              >
-                <SlidersHorizontal className="h-3 w-3 text-[#c84b2f]" />
-                <span>Style: <strong>{isRefined ? 'Refined' : 'Classic'}</strong></span>
-              </button>
-
-              {userSession && (
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 text-[11px] text-[#8a8075] hover:text-[#c84b2f] transition-colors p-1"
-                  title="Sign Out"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  // Classic Neo-Brutalist Layout
   return (
-    <header className="sticky top-0 z-50 bg-[#e8e0d0] border-b border-[#1a1714]">
+    <header className="sticky top-0 z-50 bg-[#ffffff]/95 backdrop-blur-md border-b border-[#1a1714]/15 transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-[#1a1714]">
-              Folk Agents
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5">
+            <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#1a1714]">
+              Folk
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-2">
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
-              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold border transition-all ${
+                  className={`text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-[#1a1714] text-[#f5f0e8] border-[#1a1714]'
-                      : 'bg-[#f5f0e8] text-[#1a1714] border-[#1a1714] hover:bg-[#ebd9be]'
+                      ? 'text-[#1a1714] font-bold border-b-2 border-[#1a1714] pb-0.5'
+                      : 'text-[#8a8075] hover:text-[#1a1714]'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{item.label}</span>
+                  {item.label}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="btn-paper flex items-center gap-1 text-[10px] py-1 px-2"
-              title="Toggle UI Style"
-            >
-              <SlidersHorizontal className="h-3 w-3 text-[#c84b2f]" />
-              <span>Style: <strong>{isRefined ? 'Refined' : 'Classic'}</strong></span>
-            </button>
+          {/* User Session Badge & Actions */}
+          <div className="flex items-center gap-4">
+            {userSession && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#1a1714]">
+                <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" />
+                <span className="font-medium">{userSession.username}</span>
+                <span className="text-[10px] text-[#8a8075]">({userSession.role})</span>
+              </div>
+            )}
 
             {userSession && (
               <button
                 onClick={handleLogout}
-                className="btn-paper flex items-center gap-1 text-[10px] py-1 px-2"
+                className="flex items-center gap-1.5 text-xs text-[#8a8075] hover:text-[#c84b2f] transition-colors py-1 px-2 border border-[#1a1714]/15 hover:border-[#c84b2f]"
                 title="Sign Out"
               >
-                <LogOut className="h-3 w-3" />
+                <LogOut className="h-3.5 w-3.5" />
                 <span>Sign Out</span>
               </button>
             )}

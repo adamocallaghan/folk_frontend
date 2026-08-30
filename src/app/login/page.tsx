@@ -67,7 +67,7 @@ function LoginForm() {
       {/* Title */}
       <div className="space-y-1 text-center">
         <span className={isRefined ? 'text-xs uppercase tracking-wider text-[#8a8075] font-medium' : 'tag-ink mb-1'}>
-          Folk Agents Platform
+          Folk Platform
         </span>
         <h1 className="text-3xl font-bold text-[#1a1714] font-serif tracking-tight">
           Sign In

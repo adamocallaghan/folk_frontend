@@ -145,7 +145,7 @@ export default function TeacherStudentsPage() {
         <div>
           {!isRefined && <span className="tag-ink mb-1">Teacher Workspace</span>}
           <h1 className="text-3xl sm:text-4xl font-bold text-[#1a1714] font-serif tracking-tight">
-            Student Profiles & Accommodations
+            Student Profiles
           </h1>
           <p className="text-xs sm:text-sm text-[#8a8075] mt-1">
             Configure reading difficulty flags, learning modalities, and teacher accommodations.
