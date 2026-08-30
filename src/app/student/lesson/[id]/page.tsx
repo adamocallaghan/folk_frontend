@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getCurriculumPackage, sendStudentChat, evaluateSession, getStudentProfile } from '@/lib/api';
+import { getCurriculumPackage, sendStudentChat, evaluateSession, getStudentProfile, listStudentProfiles } from '@/lib/api';
 import { LessonPackage, ChatMessage, LessonSectionItem, LongitudinalProfile, WorkedExampleItem, ConceptualAnalogyItem } from '@/types';
 import MermaidViewer from '@/components/MermaidViewer';
 import QuizCard from '@/components/QuizCard';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw, UserCheck, CheckSquare, Lightbulb } from 'lucide-react';
+import { Send, CheckCircle2, Award, ArrowLeft, RefreshCw, UserCheck, CheckSquare, Lightbulb, Sparkles } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function StudentLessonPage() {
@@ -18,7 +18,8 @@ export default function StudentLessonPage() {
   const params = useParams();
   const packageId = params.id as string;
 
-  const [studentId, setStudentId] = useState('g1_sarah_jenkins');
+  const [studentId, setStudentId] = useState('G7_Amanda_Jones');
+  const [allStudents, setAllStudents] = useState<LongitudinalProfile[]>([]);
   const [studentProfile, setStudentProfile] = useState<LongitudinalProfile | null>(null);
   const [lessonPackage, setLessonPackage] = useState<LessonPackage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,38 +30,76 @@ export default function StudentLessonPage() {
   const [quizScore, setQuizScore] = useState<{ [qId: string]: boolean }>({});
   const [sessionEvaluation, setSessionEvaluation] = useState<any>(null);
 
-  const sessionId = `sess_${packageId}_${studentId}`;
+  const loadStudentData = async (activeId: string, currPackage?: LessonPackage) => {
+    try {
+      const profRes = await getStudentProfile(activeId).catch(() => null);
+      if (profRes) {
+        setStudentProfile(profRes.profile);
+      } else {
+        setStudentProfile(null);
+      }
+
+      const activePkg = currPackage || lessonPackage;
+      const title = activePkg?.primary_text?.lesson_title || activePkg?.framework?.topic || 'this lesson';
+      const name = profRes?.profile?.display_name || activeId;
+
+      const diffs = profRes?.profile?.reading_difficulty_flags || [];
+      const mods = profRes?.profile?.modalities_flags || profRes?.profile?.learning_style_affinities || [];
+      const allFlagsStr = [...diffs, ...mods, profRes?.profile?.teacher_notes || ''].join(' ').toLowerCase();
+
+      let tutorIntro = `Hi ${name}! I'm Aura, your tutor for "${title}". Ask me anything if you'd like a simpler explanation or want to test your understanding!`;
+      if (allFlagsStr.includes('worked example') || allFlagsStr.includes('math') || allFlagsStr.includes('step-by-step')) {
+        tutorIntro += ` I've unlocked personalized step-by-step worked practice for you below.`;
+      }
+
+      setMessages([
+        {
+          id: 'init_1',
+          role: 'assistant',
+          content: tutorIntro,
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ]);
+    } catch (e) {
+      console.warn('Error loading student profile in lesson:', e);
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('folk_active_student_id');
-    const activeId = saved || 'g1_sarah_jenkins';
-    setStudentId(activeId);
+    const initialStudentId = saved || 'G7_Amanda_Jones';
+    setStudentId(initialStudentId);
 
     Promise.all([
       getCurriculumPackage(packageId),
-      getStudentProfile(activeId).catch(() => null),
+      listStudentProfiles().catch(() => ({ profiles: [] })),
     ])
-      .then(([currRes, profRes]) => {
+      .then(([currRes, studListRes]) => {
         setLessonPackage(currRes.curriculum);
-        if (profRes) setStudentProfile(profRes.profile);
-        setLoading(false);
+        const profs = studListRes.profiles || [];
+        setAllStudents(profs);
 
-        const title = currRes.curriculum.primary_text?.lesson_title || currRes.curriculum.framework?.topic || 'this lesson';
-        const name = profRes?.profile?.display_name || activeId;
-        setMessages([
-          {
-            id: 'init_1',
-            role: 'assistant',
-            content: `Hi ${name}! I'm Aura, your tutor for "${title}". As you read through the sections and diagrams, ask me anything if you get stuck or want a simpler explanation!`,
-            timestamp: new Date().toLocaleTimeString(),
-          },
-        ]);
+        const currentActive = profs.find((s) => s.student_id === initialStudentId)
+          ? initialStudentId
+          : profs[0]?.student_id || initialStudentId;
+
+        setStudentId(currentActive);
+        loadStudentData(currentActive, currRes.curriculum);
+        setLoading(false);
       })
       .catch((err) => {
         console.warn('Lesson fetch error:', err);
         setLoading(false);
       });
   }, [packageId]);
+
+  const handleStudentSwitch = (newId: string) => {
+    setStudentId(newId);
+    localStorage.setItem('folk_active_student_id', newId);
+    loadStudentData(newId);
+  };
+
+  const sessionId = `sess_${packageId}_${studentId}`;
 
   const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,19 +204,110 @@ export default function StudentLessonPage() {
     lessonPackage?.conceptual_analogies_package?.analogies ||
     [];
 
+  // Student Accommodation Filtering
+  const studentDiffFlags = studentProfile?.reading_difficulty_flags || [];
+  const studentModalities = studentProfile?.modalities_flags || studentProfile?.learning_style_affinities || [];
+  const allStudentFlagsStr = [
+    ...studentDiffFlags,
+    ...studentModalities,
+    studentProfile?.teacher_notes || '',
+  ].join(' ').toLowerCase();
+
+  const studentNeedsWorkedExamples =
+    allStudentFlagsStr.includes('worked example') ||
+    allStudentFlagsStr.includes('formula friction') ||
+    allStudentFlagsStr.includes('math') ||
+    allStudentFlagsStr.includes('step-by-step');
+
+  const studentNeedsAnalogies =
+    allStudentFlagsStr.includes('analog') ||
+    allStudentFlagsStr.includes('thought experiment') ||
+    allStudentFlagsStr.includes('conceptual first') ||
+    allStudentFlagsStr.includes('formula friction');
+
+  const studentNeedsSimplification =
+    allStudentFlagsStr.includes('dyslexia') ||
+    allStudentFlagsStr.includes('chunked') ||
+    allStudentFlagsStr.includes('esl') ||
+    allStudentFlagsStr.includes('reading difficulty');
+
+  const hasAnyActiveAccommodation = studentNeedsWorkedExamples || studentNeedsAnalogies || studentNeedsSimplification;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
-      {/* Top Breadcrumbs & Student Indicator */}
-      <div className={`flex items-center justify-between pb-4 ${isRefined ? 'border-b border-[#1a1714]/15' : 'border-b border-[#1a1714]'}`}>
+      {/* Top Breadcrumbs & Student Switcher */}
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 ${isRefined ? 'border-b border-[#1a1714]/15' : 'border-b border-[#1a1714]'}`}>
         <Link href="/student" className="flex items-center gap-1.5 text-xs text-[#1a1714] hover:underline font-semibold">
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Back to Lessons</span>
+          <span>Back to Lesson Catalog</span>
         </Link>
-        <div className="flex items-center gap-2 text-xs">
-          <span className={isRefined ? 'text-[#8a8075] font-medium' : 'tag-ink bg-[#ebd9be] border-[#1a1714] text-[#1a1714]'}>
-            Reading as: <strong className="text-[#1a1714]">{studentProfile?.display_name || studentId}</strong>
+
+        {/* Student Switcher in Lesson */}
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-semibold text-[#1a1714] flex items-center gap-1">
+            <UserCheck className="h-3.5 w-3.5 text-[#c84b2f]" /> Active Student:
+          </label>
+          <select
+            value={studentId}
+            onChange={(e) => handleStudentSwitch(e.target.value)}
+            className="border border-[#1a1714]/30 bg-[#ffffff] px-3 py-1.5 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
+          >
+            {allStudents.map((st) => (
+              <option key={st.student_id} value={st.student_id}>
+                {st.display_name || st.student_id} &bull; {st.reading_level || 'Grade 7-8'}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Dynamic Student Accommodations Status Banner */}
+      <div className={`p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs ${
+        hasAnyActiveAccommodation
+          ? isRefined
+            ? 'bg-[#ffffff] border border-[#c84b2f]/30 shadow-sm'
+            : 'bg-[#ebd4cc] border border-[#1a1714]'
+          : isRefined
+          ? 'bg-[#ffffff] border border-[#1a1714]/15 shadow-sm'
+          : 'bg-[#f5f0e8] border border-[#1a1714]'
+      }`}>
+        <div className="flex items-center gap-2">
+          {hasAnyActiveAccommodation ? (
+            <Sparkles className="h-4 w-4 text-[#c84b2f]" />
+          ) : (
+            <UserCheck className="h-4 w-4 text-[#1a1714]" />
+          )}
+          <span className="font-semibold text-[#1a1714]">
+            Viewing as {studentProfile?.display_name || studentId}:
           </span>
-          {!isRefined && <span className="tag-ink">{packageId}</span>}
+          <span className="text-[#8a8075]">
+            {hasAnyActiveAccommodation
+              ? 'Personalized Accommodations Active'
+              : 'Standard Core Stream'}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+          {studentNeedsWorkedExamples && (
+            <span className="px-2 py-0.5 bg-[#c84b2f] text-[#f5f0e8] font-medium">
+              + Worked Examples
+            </span>
+          )}
+          {studentNeedsAnalogies && (
+            <span className="px-2 py-0.5 bg-[#1a1714] text-[#f5f0e8] font-medium">
+              + Intuitive Analogies
+            </span>
+          )}
+          {studentNeedsSimplification && (
+            <span className="px-2 py-0.5 bg-[#cbd7c7] text-[#1a1714] font-medium">
+              + Simplified Lexile
+            </span>
+          )}
+          {!hasAnyActiveAccommodation && (
+            <span className="text-[#8a8075] italic">
+              (No assistive flags required for this profile)
+            </span>
+          )}
         </div>
       </div>
 
@@ -238,14 +368,14 @@ export default function StudentLessonPage() {
               })}
             </div>
 
-            {/* Tailored Worked Examples for this Student */}
-            {resolvedWorkedExamples.length > 0 && (
+            {/* ONLY DISPLAY WORKED EXAMPLES IF STUDENT NEEDS THEM */}
+            {resolvedWorkedExamples.length > 0 && studentNeedsWorkedExamples && (
               <div className={`pt-6 space-y-4 ${isRefined ? 'border-t border-[#1a1714]/15' : 'border-t border-[#1a1714]'}`}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold text-[#1a1714] font-serif flex items-center gap-2">
                     <CheckSquare className="h-4 w-4 text-[#c84b2f]" /> Step-by-Step Worked Practice
                   </h3>
-                  <span className="text-xs text-[#8a8075]">Tailored for {studentProfile?.display_name || studentId}</span>
+                  <span className="text-xs text-[#c84b2f] font-medium">Tailored for {studentProfile?.display_name || studentId}</span>
                 </div>
 
                 <div className="space-y-4">
@@ -280,8 +410,8 @@ export default function StudentLessonPage() {
               </div>
             )}
 
-            {/* Tailored Analogies & Intuition Anchors */}
-            {resolvedAnalogies.length > 0 && (
+            {/* ONLY DISPLAY ANALOGIES IF STUDENT NEEDS THEM */}
+            {resolvedAnalogies.length > 0 && studentNeedsAnalogies && (
               <div className={`pt-6 space-y-4 ${isRefined ? 'border-t border-[#1a1714]/15' : 'border-t border-[#1a1714]'}`}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold text-[#1a1714] font-serif flex items-center gap-2">
