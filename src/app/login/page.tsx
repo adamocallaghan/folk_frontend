@@ -14,21 +14,16 @@ function LoginForm() {
   const isRefined = theme === 'refined';
 
   const [roleTab, setRoleTab] = useState<'teacher' | 'student'>('teacher');
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('folk-admin-2026');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleTabChange = (role: 'teacher' | 'student') => {
     setRoleTab(role);
     setError(null);
-    if (role === 'teacher') {
-      setUsername('admin');
-      setPassword('folk-admin-2026');
-    } else {
-      setUsername('student');
-      setPassword('student123');
-    }
+    setUsername('');
+    setPassword('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +52,7 @@ function LoginForm() {
       router.push(dest);
       router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your password.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -129,14 +124,14 @@ function LoginForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-semibold text-[#1a1714] mb-1">
-            {roleTab === 'teacher' ? 'Username / Teacher ID' : 'Student Name / ID'}
+            {roleTab === 'teacher' ? 'Username' : 'Student Name / ID'}
           </label>
           <input
             type="text"
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder={roleTab === 'teacher' ? 'admin' : 'student'}
+            placeholder={roleTab === 'teacher' ? 'Enter username...' : 'Enter student ID...'}
             className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3.5 py-2.5 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
           />
         </div>
@@ -151,7 +146,7 @@ function LoginForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password..."
+              placeholder="••••••••"
               className="w-full border border-[#1a1714]/30 bg-[#f5f0e8] px-3.5 py-2.5 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
             />
             <Lock className="h-3.5 w-3.5 absolute right-3 top-3 text-[#8a8075]" />
@@ -182,25 +177,6 @@ function LoginForm() {
           </button>
         </div>
       </form>
-
-      {/* Demo Credentials Help Callout */}
-      <div className={`p-3 text-[11px] text-[#8a8075] border-t ${
-        isRefined ? 'border-[#1a1714]/10' : 'border-[#1a1714]/20'
-      }`}>
-        <p className="font-semibold text-[#1a1714] mb-1">Default Production Credentials:</p>
-        <div className="grid grid-cols-2 gap-2 text-[10px]">
-          <div>
-            <strong className="text-[#1a1714]">Teacher:</strong> <br />
-            User: <code className="bg-[#f5f0e8] px-1 py-0.5">admin</code><br />
-            Pass: <code className="bg-[#f5f0e8] px-1 py-0.5">folk-admin-2026</code>
-          </div>
-          <div>
-            <strong className="text-[#1a1714]">Student:</strong> <br />
-            User: <code className="bg-[#f5f0e8] px-1 py-0.5">student</code><br />
-            PIN: <code className="bg-[#f5f0e8] px-1 py-0.5">student123</code>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
