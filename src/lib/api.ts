@@ -1,6 +1,23 @@
-import { LessonPackage, LongitudinalProfile, RemediationPlan } from '@/types';
+import {
+  LessonPackage,
+  LongitudinalProfile,
+  SessionEvaluation,
+  RemediationPlan,
+} from '@/types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+// In browser, route requests through internal Next.js authenticated proxy
+const BACKEND_URL =
+  typeof window !== 'undefined'
+    ? '/api/proxy'
+    : (process.env.BACKEND_URL || 'https://folk-agent-workflows-897366780891.us-east1.run.app');
+
+export interface CurriculumGenerateRequest {
+  teacher_input: string;
+  target_age_group: string;
+  enable_audio?: boolean;
+  enable_simplification?: boolean;
+  target_student_id?: string;
+}
 
 export interface CurriculumSummary {
   package_id: string;
@@ -15,49 +32,48 @@ export interface CurriculumSummary {
   has_analogies?: boolean;
 }
 
-export async function fetchHealth() {
-  const res = await fetch(`${BACKEND_URL}/api/health`);
-  if (!res.ok) throw new Error('Backend health check failed');
-  return res.json();
+export async function fetchHealth(): Promise<{ status: string }> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/health`, { cache: 'no-store' });
+    if (!res.ok) return { status: 'offline' };
+    return res.json();
+  } catch {
+    return { status: 'offline' };
+  }
 }
 
-export async function generateCurriculum(payload: {
-  teacher_input: string;
-  target_age_group?: string;
-  enable_audio?: boolean;
-  enable_simplification?: boolean;
-  package_id?: string;
-  target_student_id?: string;
-}): Promise<{ status: string; package_id: string; curriculum: LessonPackage }> {
-  const res = await fetch(`${BACKEND_URL}/api/curriculum/generate`, {
+export async function generateCurriculum(
+  payload: CurriculumGenerateRequest
+): Promise<{ status: string; package_id: string; curriculum: LessonPackage }> {
+  const res = await fetch(`${BACKEND_URL}/curriculum/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: 'Failed to generate curriculum' }));
-    throw new Error(err.detail || 'Curriculum synthesis failed');
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || 'Failed to generate curriculum');
   }
   return res.json();
 }
 
 export async function listAllCurricula(): Promise<{
   status: string;
-  count: number;
+  total: number;
   curricula: CurriculumSummary[];
 }> {
-  const res = await fetch(`${BACKEND_URL}/api/curricula`);
-  if (!res.ok) throw new Error('Failed to fetch curricula list');
+  const res = await fetch(`${BACKEND_URL}/curricula`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to list curricula');
   return res.json();
 }
 
-export async function getCurriculumPackage(packageId: string): Promise<{
-  status: string;
-  package_id: string;
-  curriculum: LessonPackage;
-}> {
-  const res = await fetch(`${BACKEND_URL}/api/curriculum/${packageId}`);
-  if (!res.ok) throw new Error(`Failed to load curriculum ${packageId}`);
+export async function getCurriculumPackage(
+  packageId: string
+): Promise<{ status: string; package_id: string; curriculum: LessonPackage }> {
+  const res = await fetch(`${BACKEND_URL}/curriculum/${packageId}`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`Curriculum package ${packageId} not found.`);
   return res.json();
 }
 
@@ -66,13 +82,13 @@ export async function sendStudentChat(payload: {
   session_id: string;
   message: string;
   lesson_id?: string;
-}): Promise<{ status: string; reply: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/student/chat`, {
+}): Promise<{ status: string; reply: string; pedagogical_action: string }> {
+  const res = await fetch(`${BACKEND_URL}/student/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Student chat failed');
+  if (!res.ok) throw new Error('Failed to send student chat message');
   return res.json();
 }
 
@@ -80,35 +96,37 @@ export async function evaluateSession(payload: {
   session_id: string;
   student_id: string;
   lesson_id: string;
-  quiz_answers: Record<string, any>;
+  quiz_answers?: { [qId: string]: boolean };
   chat_transcript?: string;
 }): Promise<{ status: string; session_evaluation: any }> {
-  const res = await fetch(`${BACKEND_URL}/api/analytics/evaluate-session`, {
+  const res = await fetch(`${BACKEND_URL}/analytics/evaluate-session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Session evaluation failed');
+  if (!res.ok) throw new Error('Failed to evaluate session');
+  return res.json();
+}
+
+export async function getStudentProfile(
+  studentId: string
+): Promise<{ status: string; student_id: string; profile: LongitudinalProfile }> {
+  const res = await fetch(`${BACKEND_URL}/student/profile/${studentId}`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`Student profile ${studentId} not found`);
   return res.json();
 }
 
 export async function listStudentProfiles(): Promise<{
   status: string;
-  count: number;
+  total: number;
   profiles: LongitudinalProfile[];
 }> {
-  const res = await fetch(`${BACKEND_URL}/api/student/profiles`);
-  if (!res.ok) throw new Error('Failed to fetch student profiles');
-  return res.json();
-}
-
-export async function getStudentProfile(studentId: string): Promise<{
-  status: string;
-  student_id: string;
-  profile: LongitudinalProfile;
-}> {
-  const res = await fetch(`${BACKEND_URL}/api/student/profile/${studentId}`);
-  if (!res.ok) throw new Error(`Student profile ${studentId} not found`);
+  const res = await fetch(`${BACKEND_URL}/student/profiles`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to list student profiles');
   return res.json();
 }
 
@@ -120,11 +138,13 @@ export async function upsertStudentProfile(payload: {
   reading_level?: string;
   reading_difficulty_flags?: string[];
   modalities_flags?: string[];
-  teacher_notes?: string;
   learning_style_affinities?: string[];
+  teacher_notes?: string;
+  mastery_map?: Record<string, any>;
+  recurrent_misconceptions?: string[];
   scaffolding_recommendations?: string[];
-}): Promise<{ status: string; student_id: string; profile: LongitudinalProfile }> {
-  const res = await fetch(`${BACKEND_URL}/api/student/profile`, {
+}): Promise<{ status: string; student_id: string; profile: any }> {
+  const res = await fetch(`${BACKEND_URL}/student/profile`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -135,31 +155,42 @@ export async function upsertStudentProfile(payload: {
 
 export async function sendTeacherDiscovery(payload: {
   teacher_id: string;
-  student_id: string;
-  message: string;
-  session_id?: string;
-}): Promise<{ status: string; reply: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/teacher/discovery`, {
+  query?: string;
+  message?: string;
+  target_student_id?: string;
+  student_id?: string;
+}): Promise<{ status: string; reply: string; pedagogical_action: string }> {
+  const res = await fetch(`${BACKEND_URL}/governance/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Teacher discovery failed');
+  if (!res.ok) throw new Error('Failed to send teacher discovery query');
   return res.json();
 }
 
-export async function approveRemediation(payload: {
-  plan_id: string;
-  student_id: string;
-  approved: boolean;
-  teacher_id: string;
-  teacher_comments?: string;
-}): Promise<{ status: string; plan_id: string; message: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/teacher/approve-remediation`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+export async function getRemediationPlan(
+  studentId: string
+): Promise<{ status: string; plan: RemediationPlan }> {
+  const res = await fetch(`${BACKEND_URL}/remediation/plan/${studentId}`, {
+    cache: 'no-store',
   });
-  if (!res.ok) throw new Error('Approval submission failed');
+  if (!res.ok) throw new Error('Failed to fetch remediation plan');
   return res.json();
 }
+
+export async function approveRemediationPlan(
+  planOrPayload: string | { plan_id: string; student_id?: string; approved?: boolean; teacher_id?: string; teacher_comments?: string }
+): Promise<{ status: string; message: string }> {
+  const planId = typeof planOrPayload === 'string' ? planOrPayload : planOrPayload.plan_id;
+  const body = typeof planOrPayload === 'object' ? JSON.stringify(planOrPayload) : undefined;
+  const res = await fetch(`${BACKEND_URL}/remediation/plan/${planId}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+  if (!res.ok) throw new Error('Failed to approve remediation plan');
+  return res.json();
+}
+
+export const approveRemediation = approveRemediationPlan;
