@@ -3,6 +3,23 @@ import { verifySession, getAuthCookieName } from '@/lib/auth';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'https://folk-agent-workflows-897366780891.us-east1.run.app';
 
+// Automatically retrieve GCP IAM ID token when running on Cloud Run
+async function getGcpIdToken(audience: string): Promise<string | null> {
+  try {
+    const metaUrl = `http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(audience)}`;
+    const res = await fetch(metaUrl, {
+      headers: { 'Metadata-Flavor': 'Google' },
+      signal: AbortSignal.timeout(2000),
+    });
+    if (res.ok) {
+      return (await res.text()).trim();
+    }
+  } catch {
+    // Fallback when running locally or if metadata server is not reachable
+  }
+  return null;
+}
+
 async function handleProxy(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   // 1. Verify that incoming client request has a valid session cookie
   const cookieName = getAuthCookieName();
@@ -34,6 +51,12 @@ async function handleProxy(req: NextRequest, { params }: { params: Promise<{ pat
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
+
+    // Attach GCP Service-to-Service IAM Token
+    const idToken = await getGcpIdToken(BACKEND_URL);
+    if (idToken) {
+      headers['Authorization'] = `Bearer ${idToken}`;
+    }
 
     let bodyData: any = undefined;
     if (req.method !== 'GET' && req.method !== 'HEAD') {
