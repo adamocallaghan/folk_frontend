@@ -33,22 +33,20 @@ export default function StudentLessonPage() {
   const loadStudentData = async (activeId: string, currPackage?: LessonPackage) => {
     try {
       const profRes = await getStudentProfile(activeId).catch(() => null);
-      if (profRes) {
-        setStudentProfile(profRes.profile);
-      } else {
-        setStudentProfile(null);
-      }
+      const prof = profRes?.profile || null;
+      setStudentProfile(prof);
 
       const activePkg = currPackage || lessonPackage;
       const title = activePkg?.primary_text?.lesson_title || activePkg?.framework?.topic || 'this lesson';
-      const name = profRes?.profile?.display_name || activeId;
+      const name = prof?.display_name || activeId;
 
-      const diffs = profRes?.profile?.reading_difficulty_flags || [];
-      const mods = profRes?.profile?.modalities_flags || profRes?.profile?.learning_style_affinities || [];
-      const allFlagsStr = [...diffs, ...mods, profRes?.profile?.teacher_notes || ''].join(' ').toLowerCase();
+      const diffs = prof?.reading_difficulty_flags || [];
+      const hasWorkedExamplesFlag = diffs.some((f: string) =>
+        f.toLowerCase().includes('worked example') || f.toLowerCase().includes('formula friction')
+      );
 
       let tutorIntro = `Hi ${name}! I'm Aura, your tutor for "${title}". Ask me anything if you'd like a simpler explanation or want to test your understanding!`;
-      if (allFlagsStr.includes('worked example') || allFlagsStr.includes('math') || allFlagsStr.includes('step-by-step')) {
+      if (hasWorkedExamplesFlag) {
         tutorIntro += ` I've unlocked personalized step-by-step worked practice for you below.`;
       }
 
@@ -204,32 +202,23 @@ export default function StudentLessonPage() {
     lessonPackage?.conceptual_analogies_package?.analogies ||
     [];
 
-  // Student Accommodation Filtering
+  // Strict Accommodation Filtering based specifically on Reading & Accessibility Accommodations
   const studentDiffFlags = studentProfile?.reading_difficulty_flags || [];
-  const studentModalities = studentProfile?.modalities_flags || studentProfile?.learning_style_affinities || [];
-  const allStudentFlagsStr = [
-    ...studentDiffFlags,
-    ...studentModalities,
-    studentProfile?.teacher_notes || '',
-  ].join(' ').toLowerCase();
 
-  const studentNeedsWorkedExamples =
-    allStudentFlagsStr.includes('worked example') ||
-    allStudentFlagsStr.includes('formula friction') ||
-    allStudentFlagsStr.includes('math') ||
-    allStudentFlagsStr.includes('step-by-step');
+  const studentNeedsWorkedExamples = studentDiffFlags.some((f: string) => {
+    const fl = f.toLowerCase();
+    return fl.includes('worked example') || fl.includes('formula friction') || fl.includes('extra practice');
+  });
 
-  const studentNeedsAnalogies =
-    allStudentFlagsStr.includes('analog') ||
-    allStudentFlagsStr.includes('thought experiment') ||
-    allStudentFlagsStr.includes('conceptual first') ||
-    allStudentFlagsStr.includes('formula friction');
+  const studentNeedsAnalogies = studentDiffFlags.some((f: string) => {
+    const fl = f.toLowerCase();
+    return fl.includes('formula friction') || fl.includes('conceptual first');
+  });
 
-  const studentNeedsSimplification =
-    allStudentFlagsStr.includes('dyslexia') ||
-    allStudentFlagsStr.includes('chunked') ||
-    allStudentFlagsStr.includes('esl') ||
-    allStudentFlagsStr.includes('reading difficulty');
+  const studentNeedsSimplification = studentDiffFlags.some((f: string) => {
+    const fl = f.toLowerCase();
+    return fl.includes('dyslexia') || fl.includes('chunked') || fl.includes('esl');
+  });
 
   const hasAnyActiveAccommodation = studentNeedsWorkedExamples || studentNeedsAnalogies || studentNeedsSimplification;
 
@@ -250,7 +239,7 @@ export default function StudentLessonPage() {
           <select
             value={studentId}
             onChange={(e) => handleStudentSwitch(e.target.value)}
-            className="border border-[#1a1714]/30 bg-[#ffffff] px-3 py-1.5 text-xs text-[#1a1714] focus:outline-none focus:border-[#1a1714]"
+            className="border border-[#1a1714]/30 bg-[#ffffff] px-3 py-1.5 text-xs text-[#1a1714] font-medium focus:outline-none focus:border-[#1a1714]"
           >
             {allStudents.map((st) => (
               <option key={st.student_id} value={st.student_id}>
@@ -262,28 +251,28 @@ export default function StudentLessonPage() {
       </div>
 
       {/* Dynamic Student Accommodations Status Banner */}
-      <div className={`p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs ${
+      <div className={`p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs transition-all ${
         hasAnyActiveAccommodation
           ? isRefined
-            ? 'bg-[#ffffff] border border-[#c84b2f]/30 shadow-sm'
+            ? 'bg-[#ffffff] border-l-4 border-l-[#c84b2f] border border-[#1a1714]/15 shadow-sm'
             : 'bg-[#ebd4cc] border border-[#1a1714]'
           : isRefined
-          ? 'bg-[#ffffff] border border-[#1a1714]/15 shadow-sm'
+          ? 'bg-[#ffffff] border-l-4 border-l-[#8a8075] border border-[#1a1714]/15 shadow-sm'
           : 'bg-[#f5f0e8] border border-[#1a1714]'
       }`}>
         <div className="flex items-center gap-2">
           {hasAnyActiveAccommodation ? (
             <Sparkles className="h-4 w-4 text-[#c84b2f]" />
           ) : (
-            <UserCheck className="h-4 w-4 text-[#1a1714]" />
+            <UserCheck className="h-4 w-4 text-[#8a8075]" />
           )}
           <span className="font-semibold text-[#1a1714]">
             Viewing as {studentProfile?.display_name || studentId}:
           </span>
           <span className="text-[#8a8075]">
             {hasAnyActiveAccommodation
-              ? 'Personalized Accommodations Active'
-              : 'Standard Core Stream'}
+              ? 'Personalized Assistive Accommodations Active'
+              : 'Standard Core Stream (Direct Curriculum)'}
           </span>
         </div>
 
@@ -305,7 +294,7 @@ export default function StudentLessonPage() {
           )}
           {!hasAnyActiveAccommodation && (
             <span className="text-[#8a8075] italic">
-              (No assistive flags required for this profile)
+              (Assistive sections hidden for standard profile)
             </span>
           )}
         </div>
