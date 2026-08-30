@@ -90,7 +90,7 @@ export default function TeacherGovernancePage() {
       };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // Stage remediation proposal
+      // Stage remediation proposal if suggested
       if (res.reply.toLowerCase().includes('remediation') || res.reply.toLowerCase().includes('intervention') || res.reply.toLowerCase().includes('plan')) {
         setStagedPlan({
           plan_id: `plan_${Math.random().toString(36).substring(2, 8)}`,
@@ -99,19 +99,19 @@ export default function TeacherGovernancePage() {
           identified_learning_gaps: profile?.recurrent_misconceptions?.length
             ? profile.recurrent_misconceptions
             : [
-                'Atmospheric re-entry thermodynamics & compression shock heating',
-                'Photosynthesis light-dependent vs dark reaction staging',
+                'Step-by-step calculation friction in acceleration problems',
+                'Synthesizing multiple forces in equilibrium scenarios',
               ],
           proposed_interventions: [
             {
               rule_id: 'rule_visual_01',
               action_type: 'insert_visual_scaffold',
-              description: 'Render structural diagrams before numerical formulas',
+              description: 'Provide structured flowchart scaffolds before quiz checkpoints',
             },
             {
-              rule_id: 'rule_analogy_02',
-              action_type: 'analogy_anchoring',
-              description: 'Anchor concrete real-world analogy before abstract theory',
+              rule_id: 'rule_worked_02',
+              action_type: 'insert_visual_scaffold',
+              description: 'Embed progressive worked practice with annotated formula breakdown',
             },
           ],
           status: 'proposed',
@@ -119,7 +119,14 @@ export default function TeacherGovernancePage() {
         });
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('Governance chat error:', err);
+      const errMsg: ChatMessage = {
+        id: Math.random().toString(),
+        role: 'assistant',
+        content: `Sorry, I encountered an issue analyzing ${profile?.display_name || studentId}: ${err.message || 'Please try again.'}`,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages((prev) => [...prev, errMsg]);
     } finally {
       setLoadingChat(false);
     }

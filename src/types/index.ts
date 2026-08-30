@@ -169,7 +169,7 @@ export interface MasteryRecord {
 
 export interface RemediationRule {
   rule_id: string;
-  action_type: 'insert_visual_scaffold' | 'simplify_lexile' | 'inject_analogy' | 'chunk_pacing' | 'analogy_anchoring';
+  action_type: 'insert_visual_scaffold' | 'simplify_lexile' | 'inject_analogy' | 'chunk_pacing' | 'analogy_anchoring' | 'worked_example_anchoring' | string;
   description: string;
   target_concept?: string;
 }

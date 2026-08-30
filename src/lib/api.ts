@@ -154,18 +154,28 @@ export async function upsertStudentProfile(payload: {
 }
 
 export async function sendTeacherDiscovery(payload: {
-  teacher_id: string;
+  teacher_id?: string;
   query?: string;
   message?: string;
   target_student_id?: string;
   student_id?: string;
 }): Promise<{ status: string; reply: string; pedagogical_action: string }> {
-  const res = await fetch(`${BACKEND_URL}/governance/chat`, {
+  const finalMsg = payload.message || payload.query || '';
+  const finalStudentId = payload.student_id || payload.target_student_id || 'G7_Leo_Smyth';
+
+  const res = await fetch(`${BACKEND_URL}/teacher/discovery`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      teacher_id: payload.teacher_id || 'teacher_admin',
+      student_id: finalStudentId,
+      message: finalMsg,
+    }),
   });
-  if (!res.ok) throw new Error('Failed to send teacher discovery query');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || errorData.message || 'Failed to send teacher discovery query');
+  }
   return res.json();
 }
 
